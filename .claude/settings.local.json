@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git remote set-url origin https://github.com/Penhall/AMLDO.git)",
+      "Bash(git add README.md CLAUDE.md docs/ requirements.txt)",
+      "Bash(git commit -m \"$(cat <<''EOF''\ndocs: adiciona documentação completa do projeto em português\n\nCriada documentação abrangente e minuciosa do AMLDO com 10 documentos:\n\n- 00-visao-geral.md: Introdução, objetivos e contexto de negócio\n- 01-arquitetura-tecnica.md: Componentes, camadas e decisões arquiteturais\n- 02-pipeline-rag.md: Detalhamento do pipeline RAG v1 e v2\n- 03-estrutura-dados.md: Organização de dados e metadados\n- 04-guia-desenvolvedor.md: Setup, desenvolvimento e debugging\n- 05-comandos-fluxos.md: Comandos úteis e workflows\n- 06-estado-atual.md: Status, funcionalidades e limitações\n- 07-casos-de-uso.md: Personas e exemplos práticos\n- 08-melhorias-roadmap.md: Propostas de melhoria e roadmap\n- README.md: Índice de navegação completo\n\nTambém atualizado:\n- README.md principal: Reformulado com visual moderno e links para docs\n- CLAUDE.md: Guia para desenvolvimento com Claude Code\n- requirements.txt: Atualizado com dependências\n\nTotal: ~45.000 linhas de documentação técnica em português do Brasil\n\n🤖 Generated with Claude Code (https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push origin main)",
+      "Read(//home/petto/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
