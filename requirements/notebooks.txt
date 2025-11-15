@@ -1,0 +1,19 @@
+# =============================================================================
+# AMLDO - Dependências para Notebooks
+# =============================================================================
+# Dependências para Jupyter notebooks e análise de dados
+
+-r base.txt
+
+# Jupyter
+jupyter>=1.0.0
+ipykernel==6.30.1
+notebook>=7.0.0
+
+# Visualização
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.14.0
+
+# Análise
+scikit-learn>=1.3.0

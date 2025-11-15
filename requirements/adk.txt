@@ -1,0 +1,10 @@
+# =============================================================================
+# AMLDO - Dependências Google ADK
+# =============================================================================
+# Dependências específicas para usar Google Agent Development Kit
+
+-r base.txt
+
+# Google ADK
+google-adk==1.14.1
+google-cloud-aiplatform==1.122.0

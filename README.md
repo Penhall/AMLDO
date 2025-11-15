@@ -2,11 +2,11 @@
 
 > **Sistema de Retrieval-Augmented Generation (RAG)** especializado em legislação brasileira de licitações, compliance e governança.
 
-[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-1.0-green.svg)](https://langchain.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## 📋 Visão Geral
+##  📋 Visão Geral
 
 O **AMLDO** permite consultas em linguagem natural sobre legislação de licitações, retornando respostas precisas e fundamentadas exclusivamente nos documentos legais indexados.
 
@@ -14,13 +14,14 @@ O **AMLDO** permite consultas em linguagem natural sobre legislação de licita�
 
 - ✅ **Busca Semântica Avançada** - Embeddings multilíngues + FAISS
 - ✅ **Respostas Fundamentadas** - Cita artigos e leis (sem alucinações)
-- ✅ **Interface Conversacional** - Chat em tempo real via Google ADK
+- ✅ **Múltiplas Interfaces** - Google ADK (CLI) + Streamlit (Web)
 - ✅ **2 Versões do RAG** - Básico (v1) e Aprimorado com contexto hierárquico (v2)
+- ✅ **Pipeline Completo** - Ingestão → Estruturação → Indexação → Consulta
 - ✅ **4 Documentos Indexados** - Lei 14.133, LGPD, LCP 123, Decreto 10.024
 
 ### Tecnologias
 
-- **Python 3.11** | **LangChain** | **FAISS** | **Sentence Transformers** | **Gemini 2.5 Flash** | **Google ADK**
+- **Python 3.11+** | **LangChain** | **FAISS** | **Sentence Transformers** | **Gemini 2.5 Flash** | **Google ADK** | **Streamlit**
 
 ---
 
@@ -28,14 +29,14 @@ O **AMLDO** permite consultas em linguagem natural sobre legislação de licita�
 
 ### Pré-requisitos
 
-- Python **3.11** (obrigatório)
+- Python **3.11** ou superior
 - API Key do Google Gemini ([Obter aqui](https://makersuite.google.com/app/apikey))
 
-### Instalação (5 minutos)
+### Instalação Rápida (5 minutos)
 
 ```bash
 # 1. Clonar repositório
-git clone <url-do-repo>
+git clone https://github.com/Penhall/AMLDO.git
 cd AMLDO
 
 # 2. Criar ambiente virtual
@@ -44,22 +45,149 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # 3. Instalar dependências
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -e ".[adk,streamlit]"
 
 # 4. Configurar variáveis de ambiente
-echo "GOOGLE_API_KEY=sua_chave_aqui" > .env
+cp .env.example .env
+# Edite .env e adicione sua GOOGLE_API_KEY
 
 # 5. Rodar sistema
-adk web
+adk web  # Interface Google ADK
+# ou
+streamlit run src/amldo/interfaces/streamlit/app.py  # Interface Streamlit
 ```
 
-**Acesse:** http://localhost:8080
-
-**Selecione o agente:** `rag_v2` (recomendado)
+**Google ADK:** http://localhost:8080 (selecione agente `rag_v2`)
+**Streamlit:** http://localhost:8501
 
 **Teste uma pergunta:**
 ```
 Qual é o limite de valor para dispensa de licitação em obras?
+```
+
+---
+
+## 📁 Estrutura do Projeto (v0.2.0)
+
+```
+AMLDO/
+├── src/
+│   └── amldo/                      # Package principal
+│       ├── core/                   # Configuração e exceções
+│       │   ├── config.py           # Settings centralizadas (pydantic)
+│       │   └── exceptions.py       # Hierarquia de exceções
+│       │
+│       ├── rag/                    # Sistemas RAG
+│       │   ├── v1/                 # RAG básico
+│       │   │   ├── agent.py        # Agente Google ADK
+│       │   │   └── tools.py        # Pipeline RAG simples
+│       │   └── v2/                 # RAG avançado (contexto hierárquico)
+│       │       ├── agent.py
+│       │       └── tools.py
+│       │
+│       ├── pipeline/               # Pipeline de processamento
+│       │   ├── embeddings.py       # Gerenciador de embeddings REAIS
+│       │   ├── ingestion/          # Ingestão (PDF/TXT → texto)
+│       │   ├── structure/          # Estruturação (texto → artigos)
+│       │   └── indexer/            # Indexação (artigos → FAISS)
+│       │
+│       ├── agents/                 # Sistema multi-agente (CrewAI)
+│       │   ├── base_agent.py
+│       │   ├── orchestrator.py
+│       │   └── specialized/        # Agentes especializados
+│       │
+│       ├── interfaces/             # Interfaces do usuário
+│       │   ├── adk/                # Interface Google ADK
+│       │   └── streamlit/          # Interface Streamlit
+│       │       ├── app.py
+│       │       └── pages/
+│       │           ├── 01_Pipeline.py     # Processamento de docs
+│       │           └── 02_RAG_Query.py    # Consultas RAG
+│       │
+│       └── utils/                  # Utilidades compartilhadas
+│
+├── tests/                          # Testes
+│   ├── unit/                       # Testes unitários
+│   ├── integration/                # Testes de integração
+│   └── conftest.py                 # Fixtures pytest
+│
+├── notebooks/                      # Análise e experimentação
+│   ├── 01_data_processing.ipynb
+│   ├── 02_vector_bank.ipynb
+│   └── 03_rag_study.ipynb
+│
+├── data/                           # Dados do projeto
+│   ├── raw/                        # PDFs originais (4 leis)
+│   ├── split_docs/                 # Documentos hierarquicamente divididos
+│   ├── processed/                  # CSVs processados
+│   └── vector_db/                  # Índice FAISS
+│
+├── docs/                           # Documentação completa
+│   ├── 00-visao-geral.md
+│   ├── 01-arquitetura-tecnica.md
+│   └── ...
+│
+├── requirements/                   # Requirements organizados
+│   ├── base.txt                    # Core dependencies
+│   ├── adk.txt                     # Google ADK
+│   ├── streamlit.txt               # Streamlit interface
+│   ├── agents.txt                  # CrewAI agents
+│   ├── dev.txt                     # Development tools
+│   └── notebooks.txt               # Jupyter notebooks
+│
+├── pyproject.toml                  # Configuração moderna Python
+├── setup.py                        # Setup para instalação
+├── .env.example                    # Template de variáveis de ambiente
+├── .pre-commit-config.yaml         # Pre-commit hooks
+├── MIGRATION.md                    # Guia de migração v0.1 → v0.2
+└── README.md                       # Este arquivo
+```
+
+---
+
+## 🎯 Uso
+
+### Interface Google ADK (Recomendado para consultas)
+
+```bash
+# Ativar ambiente virtual
+source venv/bin/activate
+
+# Executar interface ADK
+adk web
+
+# Acesse http://localhost:8080
+# Selecione agente: rag_v2 (recomendado) ou rag_v1
+```
+
+**Diferenças entre v1 e v2:**
+- **v1**: Contexto direto, mais rápido
+- **v2**: Contexto hierárquico estruturado (Lei → Título → Capítulo → Artigo)
+
+### Interface Streamlit (Web completa)
+
+```bash
+# Executar app Streamlit
+streamlit run src/amldo/interfaces/streamlit/app.py
+# ou
+python -m streamlit run src/amldo/interfaces/streamlit/app.py
+
+# Acesse http://localhost:8501
+```
+
+**Páginas disponíveis:**
+- **Home**: Visão geral do sistema
+- **Pipeline**: Upload e processamento de novos documentos
+- **RAG Query**: Consultas à base de conhecimento
+
+### Scripts CLI
+
+```bash
+# Processar novo documento
+amldo-process --input data/raw/nova_lei.pdf --output data/processed/
+
+# Criar índice FAISS
+amldo-build-index --source data/processed/artigos.jsonl --output data/vector_db/
 ```
 
 ---
@@ -81,205 +209,135 @@ Qual é o limite de valor para dispensa de licitação em obras?
 | **[Estado Atual](docs/06-estado-atual.md)** | Funcionalidades e limitações | Gestores |
 | **[Casos de Uso](docs/07-casos-de-uso.md)** | Exemplos práticos | Usuários finais |
 | **[Melhorias e Roadmap](docs/08-melhorias-roadmap.md)** | Próximos passos | Stakeholders |
+| **[Guia de Migração](MIGRATION.md)** | v0.1 → v0.2 | Desenvolvedores |
 
 ---
 
-## 📁 Estrutura do Projeto
+## 🧪 Desenvolvimento
 
-```
-AMLDO/
-├── data/                      # Dados do projeto
-│   ├── raw/                   # PDFs originais (4 leis)
-│   ├── split_docs/            # Documentos hierarquicamente divididos
-│   ├── processed/             # CSVs processados
-│   └── vector_db/             # Índice FAISS
-│
-├── rag_v1/                    # Versão 1 - RAG Básico
-│   ├── agent.py               # Definição do agente
-│   └── tools.py               # Pipeline RAG simples
-│
-├── rag_v2/                    # Versão 2 - RAG Aprimorado
-│   ├── agent.py               # Definição do agente
-│   └── tools.py               # Pipeline RAG com pós-processamento
-│
-├── docs/                      # Documentação completa
-│   ├── README.md              # Índice da documentação
-│   ├── 00-visao-geral.md
-│   ├── 01-arquitetura-tecnica.md
-│   └── ...
-│
-├── get_v1_data.ipynb          # Notebook: processar PDFs
-├── get_vectorial_bank_v1.ipynb # Notebook: criar índice FAISS
-├── order_rag_study.ipynb      # Notebook: análises
-│
-├── .env                       # Variáveis de ambiente (GOOGLE_API_KEY)
-├── requirements.txt           # Dependências Python
-├── README.md                  # Este arquivo
-└── CLAUDE.md                  # Guia para Claude Code
-```
-
----
-
-## 🎯 Casos de Uso
-
-### Exemplo 1: Consultar Limite de Dispensa
-
-**Pergunta:**
-> "Qual o limite de valor para dispensa em obras?"
-
-**Resposta:**
-> Segundo o Art. 75, inciso I da Lei 14.133/2021, é dispensável a licitação para contratações que envolvam valores inferiores a **R$ 50.000,00** no caso de obras e serviços de engenharia.
-
-### Exemplo 2: LGPD em Licitações
-
-**Pergunta:**
-> "Como a LGPD se aplica a dados pessoais em licitações?"
-
-**Resposta:**
-> Segundo a Lei 13.709/2018 (LGPD), o tratamento de dados pessoais deve observar os princípios da **finalidade** e **necessidade**. Em licitações, colete apenas dados estritamente necessários para avaliar qualificação técnica e regularidade fiscal...
-
-### Exemplo 3: Pregão Eletrônico
-
-**Pergunta:**
-> "Qual o prazo mínimo entre publicação e abertura de pregão?"
-
-**Resposta:**
-> Segundo o Art. 54 da Lei 14.133/2021, o prazo mínimo entre a publicação do edital e a abertura da sessão pública é de **8 dias úteis** para pregão eletrônico.
-
-**[Ver mais casos de uso →](docs/07-casos-de-uso.md)**
-
----
-
-## 🛠️ Desenvolvimento
-
-### Adicionar Novo Documento
+### Setup para Desenvolvimento
 
 ```bash
-# 1. Adicionar PDF em data/raw/
-cp ~/Lei99999.pdf data/raw/L99999.pdf
+# Instalar com dependências de desenvolvimento
+pip install -e ".[dev,adk,streamlit,agents,notebooks]"
 
-# 2. Processar (abrir Jupyter)
-jupyter lab
-# Executar get_v1_data.ipynb
-# Executar get_vectorial_bank_v1.ipynb
+# Instalar pre-commit hooks
+pre-commit install
 
-# 3. Reiniciar servidor
-adk web
+# Rodar testes
+pytest
+
+# Com coverage
+pytest --cov=src/amldo --cov-report=html
+
+# Formatar código
+black src/
+
+# Lint
+ruff check src/
+
+# Type checking
+mypy src/
 ```
 
-### Modificar Pipeline RAG
+### Estrutura de Testes
 
-```bash
-# Editar código
-code rag_v2/tools.py
-
-# Salvar e reiniciar
-# Ctrl+C
-adk web
+```
+tests/
+├── unit/                   # Testes unitários
+│   ├── test_config.py
+│   ├── test_ingestion.py
+│   ├── test_structure.py
+│   └── test_indexer.py
+├── integration/            # Testes de integração
+└── conftest.py             # Fixtures compartilhadas
 ```
 
-### Executar Testes
+### Pre-commit Hooks
 
-```bash
-# Teste rápido
-python quick_test.py
-
-# Testes completos (quando implementados)
-pytest tests/
-```
-
-**[Ver guia completo de desenvolvimento →](docs/04-guia-desenvolvedor.md)**
+Configurados automaticamente para:
+- ✅ Formatação com Black
+- ✅ Linting com Ruff
+- ✅ Type checking com mypy
+- ✅ Validações gerais (trailing whitespace, YAML, etc)
 
 ---
 
-## 📊 Status do Projeto
+## 🔧 Configuração
 
-| Aspecto | Estado |
-|---------|--------|
-| **Funcionalidade** | ✅ Operacional (desenvolvimento) |
-| **Documentação** | ✅ Completa |
-| **Testes** | ⚠️ Não implementados |
-| **Autenticação** | ❌ Não implementado |
-| **Deploy Produção** | ❌ Não implementado |
+Todas as configurações são centralizadas em `src/amldo/core/config.py` e podem ser sobrescritas via `.env`:
 
-### Documentos Indexados
+```bash
+# API Keys (OBRIGATÓRIO)
+GOOGLE_API_KEY=sua_chave_aqui
 
-| Lei | Artigos | Status |
-|-----|---------|--------|
-| Lei 14.133/2021 (Licitações) | ~190 | ✅ |
-| Lei 13.709/2018 (LGPD) | ~65 | ✅ |
-| LCP 123/2006 (ME/EPP) | ~150 | ✅ |
-| Decreto 10.024/2019 (Pregão) | ~40 | ✅ |
+# Modelos
+EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+LLM_MODEL=gemini-2.5-flash
 
-**[Ver estado completo do sistema →](docs/06-estado-atual.md)**
+# RAG
+SEARCH_K=12
+SEARCH_TYPE=mmr
 
----
+# Paths
+VECTOR_DB_PATH=data/vector_db/v1_faiss_vector_db
 
-## 🗺️ Roadmap
+# Ambiente
+ENVIRONMENT=development
+LOG_LEVEL=INFO
+DEBUG=false
+```
 
-### Q1 2025 - Fundações
-- [ ] Testes automatizados
-- [ ] Logging estruturado
-- [ ] Autenticação básica
-- [ ] +10 documentos
-- [ ] Deploy staging
-
-### Q2 2025 - Otimização
-- [ ] Cache de respostas
-- [ ] Frontend customizado
-- [ ] Deploy produção
-
-### Q3 2025 - Expansão
-- [ ] Jurisprudência (TCU, STF)
-- [ ] API pública
-- [ ] Analytics
-
-**[Ver roadmap completo →](docs/08-melhorias-roadmap.md)**
+Ver `.env.example` para lista completa de variáveis.
 
 ---
 
 ## 🤝 Contribuindo
 
-Contribuições são bem-vindas! Veja oportunidades em:
-
-- **[Melhorias Propostas](docs/08-melhorias-roadmap.md#melhorias-propostas)**
-- **[Issues no GitHub](#)** (se aplicável)
-
-### Como Contribuir
-
-1. Fork o projeto
-2. Crie uma branch (`git checkout -b feature/nova-funcionalidade`)
-3. Commit suas mudanças (`git commit -m 'feat: adiciona nova funcionalidade'`)
-4. Push para a branch (`git push origin feature/nova-funcionalidade`)
+1. Fork o repositório
+2. Crie uma branch: `git checkout -b feature/minha-feature`
+3. Commit suas mudanças: `git commit -m 'feat: adiciona nova feature'`
+4. Push para a branch: `git push origin feature/minha-feature`
 5. Abra um Pull Request
+
+**Padrões de commit:** Usamos [Conventional Commits](https://www.conventionalcommits.org/)
 
 ---
 
 ## 📄 Licença
 
-Este projeto está sob a licença MIT. Veja [LICENSE](LICENSE) para mais detalhes.
+MIT License - veja [LICENSE](LICENSE) para detalhes.
+
+---
+
+## 📞 Contato
+
+**Equipe AMLDO**
+GitHub: [@Penhall/AMLDO](https://github.com/Penhall/AMLDO)
+
+---
+
+## 🎯 Roadmap
+
+Ver [docs/08-melhorias-roadmap.md](docs/08-melhorias-roadmap.md) para detalhes completos.
+
+**Próximas features:**
+- [ ] Integração completa de agentes CrewAI
+- [ ] Análise de editais vs documentos empresariais
+- [ ] Cache de embeddings
+- [ ] Suporte a mais fontes de dados
+- [ ] API REST
+- [ ] Deploy em produção
 
 ---
 
 ## 🙏 Agradecimentos
 
-- **Google** - Gemini API e ADK Framework
-- **LangChain** - Framework RAG
-- **Facebook AI** - FAISS
-- **HuggingFace** - Sentence Transformers
-- **Comunidade Open Source**
+- Google ADK pela excelente framework de agentes
+- LangChain pela infraestrutura RAG
+- Comunidade open-source de NLP em português
 
 ---
 
-## 📞 Suporte
-
-- 📚 **Documentação:** [docs/README.md](docs/README.md)
-- 💬 **Dúvidas:** Abra uma issue
-- 🐛 **Bugs:** Reporte via issues
-- 💡 **Sugestões:** Contribua com PRs
-
----
-
-**Desenvolvido com ❤️ pela equipe AMLDO**
-
-**Última atualização:** 2025-10-30
+**Versão:** 0.2.0
+**Última atualização:** 2025-11-14

@@ -1,20 +1,23 @@
-ipykernel==6.30.1
-pandas==2.3.2
-dotenv==0.9.9
-google-cloud-aiplatform==1.122.0
-sentencepiece==0.2.1
-pymupdf==1.26.5
-langchain==1.0.2
-langchain-core==1.0.1
-langchain-text-splitters==1.0.0
-langchain_community==0.4
-langchain_huggingface==1.0.0
-sentence-transformers==5.1.2
-faiss-cpu==1.12.0
-langchain-google-genai==3.0.0
-google-ai-generativelanguage==0.9.0
-google-adk==1.14.1
-# Removed due to dependency conflict with langchain-google-genai==3.0.0
-# google-generativeai pins google-ai-generativelanguage==0.6.15, while
-# langchain-google-genai>=2.0 requires >=0.7.0. The project code does not
-# import google.generativeai directly, so we omit it here.
+# =============================================================================
+# AMLDO - Requirements Principal
+# =============================================================================
+# Este arquivo aponta para as dependências base.
+# Para instalação completa, use: pip install -e ".[all]"
+# Ou consulte requirements/ para dependências específicas.
+
+-r requirements/base.txt
+
+# Para desenvolvedores:
+# pip install -r requirements/dev.txt
+
+# Para interface Streamlit:
+# pip install -r requirements/streamlit.txt
+
+# Para Google ADK:
+# pip install -r requirements/adk.txt
+
+# Para agentes CrewAI:
+# pip install -r requirements/agents.txt
+
+# Para notebooks:
+# pip install -r requirements/notebooks.txt

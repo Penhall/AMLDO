@@ -4,135 +4,427 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AMLDO is a RAG (Retrieval-Augmented Generation) application specialized in Brazilian procurement law (licitação), compliance, governance, and internal regulations. The system uses FAISS vector store with multilingual embeddings to answer questions based on legal documents.
+**AMLDO v0.2.0** is a modern RAG (Retrieval-Augmented Generation) application specialized in Brazilian procurement law (licitação), compliance, governance, and internal regulations. The system uses FAISS vector store with multilingual embeddings to answer questions based on legal documents.
+
+**Key Improvements in v0.2:**
+- Refactored to modern `src/` package structure
+- Centralized configuration with pydantic-settings
+- Integrated LicitAI POC pipeline (now uses REAL embeddings, not dummy)
+- Added Streamlit web interface
+- Added CLI scripts for document processing
+- Comprehensive test suite with pytest
+- Pre-commit hooks and CI/CD
+- CrewAI multi-agent system integrated
 
 ## Environment Setup
 
-**Required:** Python 3.11
+**Required:** Python 3.11+
 
 ```bash
 # Create and activate virtual environment
 python3.11 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
+# Install dependencies (modern approach with pyproject.toml)
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -e ".[adk,streamlit,dev]"  # Editable install with extras
 
-# Register Jupyter kernel (if using notebooks)
-python -m ipykernel install --user --name=venv --display-name "amldo_kernel"
+# Or install specific requirements
+pip install -r requirements/base.txt
+pip install -r requirements/dev.txt
 ```
 
-**Environment Variables:** Create a `.env` file in the root with:
+**Environment Variables:** Create a `.env` file in the root (copy from `.env.example`):
 - `GOOGLE_API_KEY` (required for Gemini API)
+- See `.env.example` for full list of configurable variables
+
+**Pre-commit Hooks (optional but recommended):**
+```bash
+pre-commit install
+```
 
 ## Running the Application
 
-**Demo Web Interface:**
+### Option 1: Google ADK Interface (Recommended for RAG queries)
+
 ```bash
 # With venv activated
 adk web
 ```
-Then select the agent 'RAG' (either `rag_v1` or `rag_v2`)
+Then access http://localhost:8080 and select agent `rag_v2` (recommended) or `rag_v1`
+
+### Option 2: Streamlit Web Interface (Full pipeline)
+
+```bash
+streamlit run src/amldo/interfaces/streamlit/app.py
+```
+Then access http://localhost:8501
+
+**Pages available:**
+- **Home**: Overview
+- **Pipeline**: Upload and process new documents
+- **RAG Query**: Query the knowledge base
+
+### Option 3: CLI Scripts
+
+```bash
+# Process a new document (PDF/TXT → structured articles)
+amldo-process --input data/raw/nova_lei.pdf --output data/processed/
+
+# Build FAISS index from processed articles
+amldo-build-index --source data/processed/artigos.jsonl --output data/vector_db/
+```
 
 ## Architecture
 
-### Agent System (Google ADK)
+### Modern Package Structure (v0.2)
 
-The project uses Google's Agent Development Kit (ADK) to create conversational agents. There are two versions:
+```
+src/amldo/                      # Main package
+├── core/                       # Core configuration and exceptions
+│   ├── config.py               # Centralized settings (pydantic-settings)
+│   └── exceptions.py           # Exception hierarchy
+│
+├── rag/                        # RAG systems
+│   ├── v1/                     # Basic RAG
+│   │   ├── agent.py            # Google ADK agent
+│   │   └── tools.py            # Simple RAG pipeline
+│   └── v2/                     # Advanced RAG (hierarchical context)
+│       ├── agent.py
+│       └── tools.py
+│
+├── pipeline/                   # Document processing pipeline
+│   ├── embeddings.py           # Embedding manager (REAL, not dummy!)
+│   ├── ingestion/              # PDF/TXT → text
+│   ├── structure/              # Text → structured articles
+│   └── indexer/                # Articles → FAISS index
+│
+├── agents/                     # Multi-agent system (CrewAI)
+│   ├── base_agent.py
+│   ├── orchestrator.py
+│   └── specialized/            # Specialized agents
+│
+├── interfaces/                 # User interfaces
+│   ├── adk/                    # Google ADK interface
+│   └── streamlit/              # Streamlit web app
+│       ├── app.py
+│       └── pages/
+│
+└── utils/                      # Shared utilities
+```
 
-- **rag_v1/**: Basic RAG implementation
-  - Simple retrieval from FAISS with MMR search
-  - Returns raw context directly to LLM
+### Centralized Configuration
 
-- **rag_v2/**: Enhanced RAG with context post-processing
-  - Filters out `artigo_0.txt` from retrieval
-  - Restructures context hierarchically: Lei → Título → Capítulo → Artigo
-  - Injects "artigo 0" content (chapter/title introductions) from CSV
-  - Produces more organized legal document structure for LLM
+**All settings are managed in `src/amldo/core/config.py`:**
+- Uses pydantic-settings for validation
+- Loads from `.env` file
+- Provides defaults for all optional settings
+- Access via `from amldo.core.config import settings`
 
-Both versions expose a `root_agent` (defined in `agent.py`) that uses the `consultar_base_rag` tool (defined in `tools.py`).
+**Key settings:**
+- `google_api_key`: Gemini API key (required)
+- `embedding_model`: Sentence transformer model
+- `llm_model`: LLM model name
+- `search_k`: Number of docs to retrieve (default: 12)
+- `search_type`: Search strategy (default: "mmr")
+- `vector_db_path`: Path to FAISS index
 
-### RAG Pipeline
+### RAG Pipeline (v1 and v2)
 
-**Embedding Model:** `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`
-- Multilingual support optimized for Portuguese legal text
+Both versions located in `src/amldo/rag/`:
+
+**rag_v1/**: Basic RAG implementation
+- Simple retrieval from FAISS with MMR search
+- Returns raw context directly to LLM
+- Faster, simpler
+
+**rag_v2/**: Enhanced RAG with context post-processing
+- Filters out `artigo_0.txt` from retrieval
+- Restructures context hierarchically: Lei → Título → Capítulo → Artigo
+- Injects "artigo 0" content (chapter/title introductions) from CSV
+- Produces XML-tagged structure for LLM
+- Better for complex legal queries
+
+Both expose a `root_agent` (Google ADK agent) that uses `consultar_base_rag` tool.
+
+**Key files:**
+- `src/amldo/rag/v1/tools.py:63-83` - RAG v1 tool
+- `src/amldo/rag/v2/tools.py:138-158` - RAG v2 tool
+
+### Document Processing Pipeline
+
+**NEW in v0.2:** Integrated from LicitAI POC with major improvements.
+
+**Location:** `src/amldo/pipeline/`
+
+**Modules:**
+1. **ingestion/** (`ingest.py`): Reads PDF/TXT files, extracts and normalizes text
+2. **structure/** (`structure.py`): Splits text into articles using regex
+3. **indexer/** (`indexer.py`): Creates FAISS index from articles
+4. **embeddings.py**: **CRITICAL** - Manages REAL embeddings (sentence-transformers)
+
+**IMPORTANT:** The LicitAI POC originally used dummy embeddings. This has been replaced with real semantic embeddings using `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`.
+
+### Embedding Model
+
+**Location:** `src/amldo/pipeline/embeddings.py`
+
+```python
+from amldo.pipeline.embeddings import EmbeddingManager
+
+# Usage
+embedding_manager = EmbeddingManager()
+embeddings = embedding_manager.embed(["text1", "text2"])  # Real embeddings!
+```
+
+**Features:**
+- Uses sentence-transformers (same as RAG system)
 - Normalized embeddings
+- Configurable via settings
+- Replaces dummy embeddings from LicitAI POC
 
-**Vector Store:** FAISS index at `data/vector_db/v1_faiss_vector_db`
-- Pre-built index (not created at runtime)
-- Must enable `allow_dangerous_deserialization=True` when loading
+### Vector Store
 
-**LLM:** Gemini 2.5 Flash via LangChain's `init_chat_model`
-- Provider: `google_genai`
+**FAISS index:** `data/vector_db/v1_faiss_vector_db`
+- Pre-built index (included in repo)
+- Deserialization uses `allow_dangerous_deserialization=True` (necessary for pickle-based FAISS)
+- Only use with trusted sources
 
 **Search Configuration:**
-- Type: MMR (Maximal Marginal Relevance) for diversity
-- K: 12 documents retrieved
+- Type: MMR (Maximal Marginal Relevance)
+- K: 12 documents
+- Configurable via settings
+
+### LLM
+
+**Model:** Gemini 2.5 Flash
+**Provider:** `google_genai` (via LangChain)
+**Configuration:** Centralized in `settings.llm_model`
 
 ### Data Structure
 
 ```
 data/
-├── raw/               # Original PDF legal documents
-│   ├── D10024.pdf     # Decreto 10024
-│   ├── L13709.pdf     # Lei 13709
-│   ├── L14133.pdf     # Lei 14133
-│   └── Lcp123.pdf     # Lei Complementar 123
-├── split_docs/        # Hierarchically split documents
+├── raw/                    # Original PDF legal documents
+│   ├── D10024.pdf          # Decreto 10024
+│   ├── L13709.pdf          # Lei 13709 (LGPD)
+│   ├── L14133.pdf          # Lei 14133 (Licitações)
+│   └── Lcp123.pdf          # Lei Complementar 123
+├── split_docs/             # Hierarchically split documents
 │   └── {Lei}/TITULO_{X}/capitulos/CAPITULO_{Y}/artigos/artigo_{N}.txt
-├── processed/         # Preprocessed data
-│   ├── v1_artigos_0.csv          # Chapter/title introductions (artigo 0)
-│   └── v1_processed_articles.csv # All processed articles
+├── processed/              # Preprocessed data
+│   ├── v1_artigos_0.csv           # Chapter/title introductions
+│   └── v1_processed_articles.csv  # All processed articles
 └── vector_db/
     └── v1_faiss_vector_db/        # FAISS index files
 ```
 
-Each document chunk has metadata:
+**Metadata for each chunk:**
 - `lei`: Law identifier (e.g., "L14133")
 - `titulo`: Title section (e.g., "TITULO_II")
 - `capitulo`: Chapter section (e.g., "CAPITULO_III")
 - `artigo`: Article filename (e.g., "artigo_15.txt")
 - `chunk_idx`: Chunk index within article
 
-### Key Implementation Details
-
-**v2 Context Post-Processing (rag_v2/tools.py:58-93):**
-- Sorts retrieved chunks by document hierarchy
-- Groups by Lei → Título → Capítulo → Artigo
-- Inserts "artigo_0" text (introductory paragraphs) from `df_art_0` at appropriate hierarchy levels
-- Wraps content in XML-like tags for clear structure
-- This helps LLM understand document organization and relationships
-
-**Agent Instructions:**
-Both agents are instructed to:
-1. Always call `consultar_base_rag` for regulatory/legal questions
-2. Respond only with information from retrieved context (no hallucination)
-3. Never mention internal tool usage to users
-4. Handle general conversation without tool calls
-
 ## Development Workflow
 
-**Testing Changes to RAG:**
-1. Modify `rag_v1/tools.py` or `rag_v2/tools.py`
+### Testing Changes to RAG
+
+1. Modify `src/amldo/rag/v1/tools.py` or `src/amldo/rag/v2/tools.py`
 2. Run `adk web` and test with queries
 3. Check response quality and context relevance
 
-**Adding New Documents:**
+### Adding New Documents
+
+**Option A: Using Notebooks (Original method)**
 1. Place PDF in `data/raw/`
-2. Process using notebooks in root:
-   - `get_v1_data.ipynb`: Extract and split documents
-   - `get_vectorial_bank_v1.ipynb`: Build FAISS index
+2. Use notebooks in `notebooks/`:
+   - `01_data_processing.ipynb`: Extract and split documents
+   - `02_vector_bank.ipynb`: Build FAISS index
 3. Ensure metadata fields match existing structure
 
-**Notebooks:**
-- `order_rag_study.ipynb`: Analysis and experimentation
-- `get_v1_data.ipynb`: Document processing pipeline
-- `get_vectorial_bank_v1.ipynb`: Vector store creation
+**Option B: Using CLI Scripts (New in v0.2)**
+```bash
+# 1. Process document
+amldo-process --input data/raw/nova_lei.pdf --output data/processed/
+
+# 2. Build index
+amldo-build-index --source data/processed/nova_lei_artigos.jsonl --output data/vector_db/
+```
+
+**Option C: Using Streamlit Interface (New in v0.2)**
+1. Go to http://localhost:8501
+2. Navigate to "Pipeline" page
+3. Upload document and follow the 3-step process
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest
+
+# With coverage
+pytest --cov=src/amldo --cov-report=html
+
+# Specific test file
+pytest tests/unit/test_ingestion.py
+
+# Specific test
+pytest tests/unit/test_config.py::test_settings_with_env_vars
+```
+
+**Test structure:**
+- `tests/unit/`: Unit tests
+- `tests/integration/`: Integration tests
+- `tests/conftest.py`: Shared fixtures
+
+### Code Quality
+
+```bash
+# Format code
+black src/
+
+# Lint
+ruff check src/
+
+# Type checking
+mypy src/
+
+# Run all checks (via pre-commit)
+pre-commit run --all-files
+```
+
+### Notebooks
+
+**Location:** `notebooks/` (renamed from root in v0.2)
+- `01_data_processing.ipynb`: Document processing pipeline
+- `02_vector_bank.ipynb`: Vector store creation
+- `03_rag_study.ipynb`: Analysis and experimentation
+
+**Setup Jupyter kernel:**
+```bash
+python -m ipykernel install --user --name=amldo --display-name "AMLDO Kernel"
+```
 
 ## Important Notes
 
-- **No tests are present** in the project currently
-- The `tmp_pkg/` directory contains extracted langchain_google_genai package (likely for debugging/patches)
-- FAISS deserialization security: The code uses `allow_dangerous_deserialization=True` which is necessary for loading pickle-based FAISS indices but should only be used with trusted data sources
-- Both RAG versions share the same vector database but differ in how they process and present retrieved context
+### What Changed in v0.2
+
+- **Structure:** Moved from flat structure to `src/amldo/` package
+- **Config:** Centralized in `src/amldo/core/config.py`
+- **Embeddings:** LicitAI pipeline now uses REAL embeddings (not dummy)
+- **Tests:** Added comprehensive test suite
+- **CI/CD:** GitHub Actions for tests and linting
+- **Interfaces:** Added Streamlit web interface
+- **Scripts:** Added CLI scripts for common tasks
+- **Agents:** Integrated CrewAI multi-agent system
+- **Documentation:** Added MIGRATION.md guide
+
+### Breaking Changes from v0.1
+
+- Import paths changed: `from rag_v1.tools import` → `from amldo.rag.v1.tools import`
+- Config now loaded from `settings` singleton instead of env vars directly
+- Notebooks moved to `notebooks/` directory
+- Requirements split into `requirements/` subdirectories
+
+### Security Notes
+
+- FAISS deserialization uses `allow_dangerous_deserialization=True` (necessary for pickle-based indices)
+- Only use with trusted data sources
+- API keys managed via `.env` (never commit `.env`!)
+- `settings.model_dump_safe()` redacts secrets in logs
+
+### CrewAI Agents
+
+**Location:** `src/amldo/agents/`
+
+**Status:** Integrated but not fully connected to pipeline yet
+
+**Available agents:**
+- IngestionAgent
+- StructuringAgent
+- IndexingAgent
+- ComplianceAgent
+- ValidationAgent
+- CompanyDocsAgent
+
+**Usage:**
+```python
+from amldo.agents.orchestrator import build_all_agents
+
+agents = build_all_agents()
+# agents["compliance"], agents["validation"], etc.
+```
+
+### Migration Guide
+
+See `MIGRATION.md` for detailed migration guide from v0.1 to v0.2.
+
+## Troubleshooting
+
+### ModuleNotFoundError: No module named 'amldo'
+
+**Solution:** Install package in editable mode
+```bash
+pip install -e .
+```
+
+### FAISS deserialization error
+
+**Solution:** Ensure `allow_dangerous_deserialization=True` is set (already configured in code)
+
+### Google API Key not found
+
+**Solution:** Create `.env` file from `.env.example` and add your key
+```bash
+cp .env.example .env
+# Edit .env and add: GOOGLE_API_KEY=your_key_here
+```
+
+### Tests fail with import errors
+
+**Solution:** Install dev dependencies
+```bash
+pip install -e ".[dev]"
+```
+
+### adk web doesn't find agents
+
+**Solution:** Agents are now in `src/amldo/rag/`, but ADK should discover them automatically. If not, check that package is installed in editable mode.
+
+## Quick Reference
+
+**Common Commands:**
+```bash
+# Run RAG interface
+adk web
+
+# Run Streamlit interface
+streamlit run src/amldo/interfaces/streamlit/app.py
+
+# Process document
+amldo-process --input file.pdf --output data/processed/
+
+# Build index
+amldo-build-index --source artigos.jsonl --output vector_store/
+
+# Run tests
+pytest
+
+# Code quality
+black src/ && ruff check src/ && mypy src/
+```
+
+**Key Files:**
+- `src/amldo/core/config.py` - All configuration
+- `src/amldo/rag/v2/tools.py` - RAG v2 implementation
+- `src/amldo/pipeline/embeddings.py` - Embedding management
+- `pyproject.toml` - Project configuration
+- `.env` - Environment variables (not in git)
+- `MIGRATION.md` - Migration guide
+
+**Documentation:**
+- Full docs in `docs/` directory
+- API usage in `docs/04-guia-desenvolvedor.md`
+- Migration guide in `MIGRATION.md`
+- This file (CLAUDE.md) for quick reference

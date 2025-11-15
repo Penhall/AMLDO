@@ -3,6 +3,13 @@ how_env.txt
 old
 venv2
 
+# AMLDO específico
+data/uploads/
+vector_store/
+data/normas_raw/
+data/normas_structured/
+.streamlit/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

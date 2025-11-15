@@ -1,0 +1,211 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "amldo"
+version = "0.2.0"
+description = "Sistema RAG especializado em licitações, compliance e governança baseado em legislação brasileira"
+authors = [{name = "Equipe AMLDO"}]
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+keywords = ["rag", "licitacao", "compliance", "governanca", "lei-14133", "nlp", "faiss", "langchain"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Legal Industry",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "langchain>=0.1.0",
+    "langchain-community>=0.0.20",
+    "langchain-google-genai>=0.0.6",
+    "sentence-transformers>=2.2.0",
+    "faiss-cpu>=1.7.4",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0,<2.0.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "pypdf2>=3.0.0",
+    "typing-extensions>=4.5.0",
+]
+
+[project.optional-dependencies]
+adk = [
+    "google-genai>=0.2.0",
+]
+streamlit = [
+    "streamlit>=1.28.0",
+]
+agents = [
+    "crewai>=0.1.0",
+    "crewai-tools>=0.1.0",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+    "pre-commit>=3.5.0",
+    "ipdb>=0.13.0",
+]
+notebooks = [
+    "jupyter>=1.0.0",
+    "ipykernel>=6.25.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "plotly>=5.14.0",
+]
+all = [
+    "amldo[adk,streamlit,agents,dev,notebooks]",
+]
+
+[project.scripts]
+amldo-build-index = "amldo.scripts.build_index:main"
+amldo-process = "amldo.scripts.process_documents:main"
+amldo-streamlit = "amldo.interfaces.streamlit.app:main"
+
+[project.urls]
+Homepage = "https://github.com/Penhall/AMLDO"
+Documentation = "https://github.com/Penhall/AMLDO/tree/main/docs"
+Repository = "https://github.com/Penhall/AMLDO"
+Issues = "https://github.com/Penhall/AMLDO/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["amldo*"]
+exclude = ["tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+python_classes = "Test*"
+addopts = [
+    "-v",
+    "--cov=src/amldo",
+    "--cov-report=html",
+    "--cov-report=term",
+    "--cov-report=xml",
+    "--strict-markers",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = ["src/amldo"]
+omit = [
+    "*/tests/*",
+    "*/__init__.py",
+    "*/conftest.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | venv
+  | build
+  | dist
+  | tmp_pkg
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+    "W191",  # indentation contains tabs
+]
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+    "tmp_pkg",
+    "__pycache__",
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]  # unused imports in __init__.py
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Start permissive, tighten later
+disallow_any_unimported = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+check_untyped_defs = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "langchain.*",
+    "langchain_community.*",
+    "langchain_google_genai.*",
+    "sentence_transformers.*",
+    "faiss.*",
+    "crewai.*",
+    "streamlit.*",
+    "google.adk.*",
+]
+ignore_missing_imports = true
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_gitignore = true
+known_first_party = ["amldo"]

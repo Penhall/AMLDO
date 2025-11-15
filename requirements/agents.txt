@@ -1,0 +1,10 @@
+# =============================================================================
+# AMLDO - Dependências CrewAI
+# =============================================================================
+# Dependências para sistema multi-agente CrewAI
+
+-r base.txt
+
+# CrewAI
+crewai>=0.1.0
+crewai-tools>=0.1.0
