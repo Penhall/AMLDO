@@ -4,17 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**AMLDO v0.2.0** is a modern RAG (Retrieval-Augmented Generation) application specialized in Brazilian procurement law (licitação), compliance, governance, and internal regulations. The system uses FAISS vector store with multilingual embeddings to answer questions based on legal documents.
+**AMLDO v0.3.0** is a modern RAG (Retrieval-Augmented Generation) application specialized in Brazilian procurement law (licitação), compliance, governance, and internal regulations. The system uses FAISS vector store with multilingual embeddings to answer questions based on legal documents.
 
-**Key Improvements in v0.2:**
-- Refactored to modern `src/` package structure
-- Centralized configuration with pydantic-settings
-- Integrated LicitAI POC pipeline (now uses REAL embeddings, not dummy)
-- Added Streamlit web interface
-- Added CLI scripts for document processing
-- Comprehensive test suite with pytest
-- Pre-commit hooks and CI/CD
-- CrewAI multi-agent system integrated
+**Key Features:**
+- **3 RAG versions** (v1: basic, v2: MMR, v3: similarity search)
+- **3 Interfaces**: Google ADK, Streamlit, FastAPI REST API ✨ NEW
+- **Modern architecture** with `src/` package structure
+- **Centralized configuration** with pydantic-settings
+- **Real embeddings** (sentence-transformers)
+- **Metrics system** with SQLite ✨ NEW
+- **Comprehensive tests** with pytest
+- **Pre-commit hooks** and CI/CD
+- **CrewAI multi-agent** system
 
 ## Environment Setup
 
@@ -68,7 +69,28 @@ Then access http://localhost:8501
 - **Pipeline**: Upload and process new documents
 - **RAG Query**: Query the knowledge base
 
-### Option 3: CLI Scripts
+### Option 3: FastAPI REST API ✨ NEW (Recommended for integration)
+
+```bash
+# Start API server
+amldo-api
+
+# Or with custom settings
+API_HOST=0.0.0.0 API_PORT=8000 amldo-api
+```
+Then access:
+- http://localhost:8000 - Web interface
+- http://localhost:8000/docs - Swagger API documentation
+- http://localhost:8000/consulta - Chat interface
+- http://localhost:8000/processamento - Document processing
+
+**Key endpoints:**
+- `POST /api/ask` - Query RAG (v1/v2/v3 selectable)
+- `POST /api/upload` - Upload PDFs
+- `POST /api/process` - Process documents
+- `GET /api/metrics/stats` - System metrics
+
+### Option 4: CLI Scripts
 
 ```bash
 # Process a new document (PDF/TXT → structured articles)
@@ -112,11 +134,20 @@ src/amldo/                      # Main package
 │
 ├── interfaces/                 # User interfaces
 │   ├── adk/                    # Google ADK interface
-│   └── streamlit/              # Streamlit web app
-│       ├── app.py
-│       └── pages/
+│   ├── streamlit/              # Streamlit web app
+│   │   ├── app.py
+│   │   └── pages/
+│   └── api/                    # FastAPI REST API ✨ NEW
+│       ├── main.py
+│       ├── run.py
+│       ├── routers/            # Endpoints modulares
+│       ├── models/             # Pydantic schemas
+│       ├── templates/          # HTML (Jinja2)
+│       └── static/             # CSS, JS
 │
 └── utils/                      # Shared utilities
+    ├── logger.py
+    └── metrics.py              # Metrics system (SQLite) ✨ NEW
 ```
 
 ### Centralized Configuration
@@ -337,10 +368,13 @@ python -m ipykernel install --user --name=amldo --display-name "AMLDO Kernel"
 - **Agents:** Integrated CrewAI multi-agent system
 - **Documentation:** Added MIGRATION.md guide
 
-**v0.2.1+ (current):**
-- **RAG v3:** Added similarity search variant (experimental)
-- **Config:** Added `rag_v3_*` settings in config.py
-- **ADK:** RAG v3 agent available via `adk web`
+**v0.3.0 (current):**
+- **RAG v3:** Added similarity search variant
+- **FastAPI:** Complete REST API with 8+ endpoints
+- **Metrics:** SQLite-based metrics system
+- **Templates:** Web UI with Bootstrap 5
+- **Config:** Added API settings (`api_host`, `api_port`, etc.)
+- **Docs:** Complete API documentation (docs/10-api-fastapi.md)
 
 ### Breaking Changes from v0.1
 
@@ -418,20 +452,19 @@ pip install -e ".[dev]"
 
 **Common Commands:**
 ```bash
-# Run RAG interface
-adk web
+# Run interfaces
+adk web                          # Google ADK (port 8080)
+streamlit run src/amldo/interfaces/streamlit/app.py  # Streamlit (port 8501)
+amldo-api                        # FastAPI (port 8000) ✨ NEW
 
-# Run Streamlit interface
-streamlit run src/amldo/interfaces/streamlit/app.py
-
-# Process document
+# Process documents
 amldo-process --input file.pdf --output data/processed/
-
-# Build index
 amldo-build-index --source artigos.jsonl --output vector_store/
 
 # Run tests
-pytest
+pytest                           # All tests
+pytest tests/unit/test_rag_v3.py  # Specific test
+pytest --cov=src/amldo           # With coverage
 
 # Code quality
 black src/ && ruff check src/ && mypy src/
