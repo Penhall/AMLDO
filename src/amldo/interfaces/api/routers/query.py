@@ -12,6 +12,7 @@ from amldo.interfaces.api.models.request import QueryRequest
 from amldo.interfaces.api.models.response import QueryResponse
 from amldo.interfaces.api.dependencies import SettingsDep
 from amldo.core.exceptions import RetrievalError, LLMError, VectorStoreError
+from amldo.utils.metrics import track_query_metrics
 
 # Importar funções RAG
 from amldo.rag.v1.tools import consultar_base_rag as rag_v1
@@ -67,6 +68,14 @@ async def ask_question(payload: QueryRequest, settings: SettingsDep):
         answer = rag_functions[rag_version](question)
         response_time_ms = (time.time() - start_time) * 1000
 
+        # Registrar métrica de sucesso
+        track_query_metrics(
+            rag_version=rag_version,
+            question=question,
+            response_time=response_time_ms,
+            success=True,
+        )
+
         return QueryResponse(
             answer=answer,
             rag_version=rag_version,
@@ -75,12 +84,36 @@ async def ask_question(payload: QueryRequest, settings: SettingsDep):
         )
 
     except (RetrievalError, VectorStoreError) as e:
+        # Registrar métrica de falha
+        track_query_metrics(
+            rag_version=rag_version,
+            question=question,
+            response_time=0,
+            success=False,
+            error_message=f"Retrieval error: {str(e)}",
+        )
         raise HTTPException(
             status_code=500, detail=f"Erro ao recuperar documentos: {str(e)}"
         )
     except LLMError as e:
+        # Registrar métrica de falha
+        track_query_metrics(
+            rag_version=rag_version,
+            question=question,
+            response_time=0,
+            success=False,
+            error_message=f"LLM error: {str(e)}",
+        )
         raise HTTPException(status_code=500, detail=f"Erro no LLM: {str(e)}")
     except Exception as e:
+        # Registrar métrica de falha
+        track_query_metrics(
+            rag_version=rag_version,
+            question=question,
+            response_time=0,
+            success=False,
+            error_message=str(e),
+        )
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 

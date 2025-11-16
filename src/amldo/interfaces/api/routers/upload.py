@@ -13,6 +13,8 @@ from fastapi.responses import JSONResponse
 from amldo.interfaces.api.models.response import UploadResponse, ProcessResponse
 from amldo.interfaces.api.dependencies import SettingsDep
 from amldo.core.exceptions import VectorStoreError
+from amldo.utils.metrics import track_processing_metrics
+import json
 
 # Importar pipeline de processamento
 import fitz  # PyMuPDF
@@ -195,8 +197,17 @@ async def process_documents(settings: SettingsDep = None):
 
     duration_seconds = time.time() - start_time
 
+    # Registrar métricas
+    successful_files = len([f for f in files_info if f.get("chunks", 0) > 0])
+    track_processing_metrics(
+        files=successful_files,
+        chunks=len(new_documents),
+        duration=duration_seconds,
+        details=json.dumps(files_info),
+    )
+
     return ProcessResponse(
-        processed=len([f for f in files_info if f.get("chunks", 0) > 0]),
+        processed=successful_files,
         total_chunks=len(new_documents),
         files=files_info,
         duration_seconds=round(duration_seconds, 2),
