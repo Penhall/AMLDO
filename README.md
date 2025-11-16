@@ -165,12 +165,16 @@ AMLDO/
 │   ├── dev.txt                     # Desenvolvimento
 │   └── adk.txt                     # Google ADK
 │
+├── AMLDO_W/                        # ⚠️ DEPRECADO - código experimental (não usar)
+│
 ├── .env.example                    # Template de variáveis de ambiente
 ├── pyproject.toml                  # Configuração do projeto
 ├── CLAUDE.md                       # Guia para Claude Code
 ├── MIGRATION.md                    # Guia de migração v0.1 → v0.2
 └── README.md                       # Este arquivo
 ```
+
+**Nota:** O diretório `AMLDO_W/` contém código experimental e foi mantido apenas para referência histórica. **Não deve ser usado.** Todo código relevante foi integrado em `src/amldo/`.
 
 ---
 
