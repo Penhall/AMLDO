@@ -44,6 +44,13 @@ adk = [
 streamlit = [
     "streamlit>=1.28.0",
 ]
+api = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+    "python-multipart>=0.0.9",
+    "jinja2>=3.1.0",
+    "PyMuPDF>=1.23.0",
+]
 agents = [
     "crewai>=0.1.0",
     "crewai-tools>=0.1.0",
@@ -66,13 +73,14 @@ notebooks = [
     "plotly>=5.14.0",
 ]
 all = [
-    "amldo[adk,streamlit,agents,dev,notebooks]",
+    "amldo[adk,streamlit,api,agents,dev,notebooks]",
 ]
 
 [project.scripts]
 amldo-build-index = "amldo.scripts.build_index:main"
 amldo-process = "amldo.scripts.process_documents:main"
 amldo-streamlit = "amldo.interfaces.streamlit.app:main"
+amldo-api = "amldo.interfaces.api.run:main"
 
 [project.urls]
 Homepage = "https://github.com/Penhall/AMLDO"

@@ -1,0 +1,10 @@
+/* Estilos básicos AMLDO API */
+:root {
+  --brand: #0a2a66;
+  --accent: #1f5eff;
+  --bg: #f6f7fb;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}

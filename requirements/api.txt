@@ -1,0 +1,19 @@
+# Dependências para API FastAPI - AMLDO v0.3.0
+#
+# Instalar com:
+#   pip install -r requirements/api.txt
+# ou
+#   pip install -e ".[api]"
+
+# API Web Framework
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+
+# Upload de arquivos
+python-multipart>=0.0.9
+
+# Templates HTML
+jinja2>=3.1.0
+
+# Processamento de PDFs (para /api/process)
+PyMuPDF>=1.23.0  # fitz

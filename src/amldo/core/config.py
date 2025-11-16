@@ -203,6 +203,32 @@ class Settings(BaseSettings):
         return path
 
     # =============================================================================
+    # Configurações de API FastAPI
+    # =============================================================================
+
+    api_host: str = Field(
+        default="0.0.0.0",
+        description="Host da API FastAPI",
+    )
+
+    api_port: int = Field(
+        default=8000,
+        ge=1000,
+        le=65535,
+        description="Porta da API FastAPI",
+    )
+
+    api_debug: bool = Field(
+        default=False,
+        description="Modo debug da API (auto-reload)",
+    )
+
+    default_rag_version: Literal["v1", "v2", "v3"] = Field(
+        default="v2",
+        description="Versão padrão do RAG para consultas via API",
+    )
+
+    # =============================================================================
     # Configurações de Ambiente
     # =============================================================================
 
