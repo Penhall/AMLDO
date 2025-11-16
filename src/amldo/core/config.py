@@ -152,6 +152,27 @@ class Settings(BaseSettings):
     )
 
     # =============================================================================
+    # Configurações RAG v3 (Similarity Search Variant)
+    # =============================================================================
+
+    rag_v3_enabled: bool = Field(
+        default=True,
+        description="Habilitar RAG v3 (variante com similarity search)",
+    )
+
+    rag_v3_search_type: Literal["similarity", "mmr"] = Field(
+        default="similarity",
+        description="Tipo de busca para RAG v3 (padrão: similarity, diferente do v2)",
+    )
+
+    rag_v3_k: int = Field(
+        default=12,
+        ge=1,
+        le=50,
+        description="Número de documentos a recuperar no RAG v3",
+    )
+
+    # =============================================================================
     # Configurações de Artigo 0 (Contexto Hierárquico)
     # =============================================================================
 

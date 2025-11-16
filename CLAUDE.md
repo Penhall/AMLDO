@@ -51,7 +51,10 @@ pre-commit install
 # With venv activated
 adk web
 ```
-Then access http://localhost:8080 and select agent `rag_v2` (recommended) or `rag_v1`
+Then access http://localhost:8080 and select agent:
+- `rag_v2` (recommended - MMR search with hierarchical context)
+- `rag_v3` (experimental - similarity search with hierarchical context) ✨ NEW
+- `rag_v1` (basic - simple MMR search)
 
 ### Option 2: Streamlit Web Interface (Full pipeline)
 
@@ -77,7 +80,7 @@ amldo-build-index --source data/processed/artigos.jsonl --output data/vector_db/
 
 ## Architecture
 
-### Modern Package Structure (v0.2)
+### Modern Package Structure (v0.2+)
 
 ```
 src/amldo/                      # Main package
@@ -89,9 +92,12 @@ src/amldo/                      # Main package
 │   ├── v1/                     # Basic RAG
 │   │   ├── agent.py            # Google ADK agent
 │   │   └── tools.py            # Simple RAG pipeline
-│   └── v2/                     # Advanced RAG (hierarchical context)
-│       ├── agent.py
-│       └── tools.py
+│   ├── v2/                     # Advanced RAG (hierarchical context)
+│   │   ├── agent.py
+│   │   └── tools.py
+│   └── v3/                     # RAG v3 (similarity search variant) ✨ NEW
+│       ├── agent.py            # Google ADK agent
+│       └── tools.py            # Similarity search RAG
 │
 ├── pipeline/                   # Document processing pipeline
 │   ├── embeddings.py           # Embedding manager (REAL, not dummy!)
@@ -129,27 +135,37 @@ src/amldo/                      # Main package
 - `search_type`: Search strategy (default: "mmr")
 - `vector_db_path`: Path to FAISS index
 
-### RAG Pipeline (v1 and v2)
+### RAG Pipeline (v1, v2, and v3)
 
-Both versions located in `src/amldo/rag/`:
+Three versions available in `src/amldo/rag/`:
 
 **rag_v1/**: Basic RAG implementation
 - Simple retrieval from FAISS with MMR search
 - Returns raw context directly to LLM
 - Faster, simpler
 
-**rag_v2/**: Enhanced RAG with context post-processing
+**rag_v2/**: Enhanced RAG with context post-processing (MMR)
 - Filters out `artigo_0.txt` from retrieval
 - Restructures context hierarchically: Lei → Título → Capítulo → Artigo
 - Injects "artigo 0" content (chapter/title introductions) from CSV
 - Produces XML-tagged structure for LLM
+- Uses MMR (Maximal Marginal Relevance) search
 - Better for complex legal queries
 
-Both expose a `root_agent` (Google ADK agent) that uses `consultar_base_rag` tool.
+**rag_v3/**: Similarity Search variant ✨ NEW
+- Same hierarchical post-processing as v2
+- Uses **similarity search** instead of MMR (configurable)
+- Filters out `artigo_0.txt` from retrieval
+- Produces same XML-tagged structure
+- Experimental: may have different retrieval characteristics vs v2
+- Configurable via `settings.rag_v3_search_type` and `settings.rag_v3_k`
+
+All versions expose a `root_agent` (Google ADK agent) that uses `consultar_base_rag` tool.
 
 **Key files:**
-- `src/amldo/rag/v1/tools.py:63-83` - RAG v1 tool
-- `src/amldo/rag/v2/tools.py:138-158` - RAG v2 tool
+- `src/amldo/rag/v1/tools.py` - RAG v1 tool
+- `src/amldo/rag/v2/tools.py` - RAG v2 tool
+- `src/amldo/rag/v3/tools.py` - RAG v3 tool ✨ NEW
 
 ### Document Processing Pipeline
 
@@ -308,8 +324,9 @@ python -m ipykernel install --user --name=amldo --display-name "AMLDO Kernel"
 
 ## Important Notes
 
-### What Changed in v0.2
+### What Changed in v0.2+
 
+**v0.2.0:**
 - **Structure:** Moved from flat structure to `src/amldo/` package
 - **Config:** Centralized in `src/amldo/core/config.py`
 - **Embeddings:** LicitAI pipeline now uses REAL embeddings (not dummy)
@@ -319,6 +336,11 @@ python -m ipykernel install --user --name=amldo --display-name "AMLDO Kernel"
 - **Scripts:** Added CLI scripts for common tasks
 - **Agents:** Integrated CrewAI multi-agent system
 - **Documentation:** Added MIGRATION.md guide
+
+**v0.2.1+ (current):**
+- **RAG v3:** Added similarity search variant (experimental)
+- **Config:** Added `rag_v3_*` settings in config.py
+- **ADK:** RAG v3 agent available via `adk web`
 
 ### Breaking Changes from v0.1
 
