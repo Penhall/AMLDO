@@ -15,7 +15,7 @@
 
 🟢 **Status:** Funcional em ambiente de desenvolvimento
 
-**Última Atualização:** 2025-10-30
+**Última Atualização:** 2025-11-16
 
 | Aspecto | Estado | Comentário |
 |---------|--------|------------|
@@ -23,11 +23,13 @@
 | **Dados** | ✅ Processados | 4 leis indexadas (~500 artigos) |
 | **RAG v1** | ✅ Funcional | Pipeline básico operacional |
 | **RAG v2** | ✅ Funcional | Pipeline aprimorado operacional |
-| **Interface** | ✅ Funcional | ADK Web rodando localmente |
-| **Testes** | ⚠️ Ausentes | Sem testes automatizados |
+| **RAG v3** | ✅ Funcional | Pipeline experimental (similarity search) ✨ NOVO |
+| **REST API** | ✅ Funcional | FastAPI com 8+ endpoints ✨ NOVO |
+| **Interface** | ✅ Funcional | ADK Web + Streamlit + FastAPI Web |
+| **Testes** | ⚠️ Parcial | Testes unitários para métricas e RAG v3 ✨ NOVO |
 | **Deploy** | ❌ Não implementado | Apenas desenvolvimento local |
-| **Documentação** | ✅ Completa | Docs técnicas e guias |
-| **Monitoramento** | ❌ Não implementado | Sem logs estruturados |
+| **Documentação** | ✅ Completa | Docs técnicas + API REST |
+| **Monitoramento** | ⚠️ Parcial | Sistema de métricas SQLite ✨ NOVO |
 
 ### Versões Ativas
 
@@ -38,22 +40,24 @@
 | **FAISS** | 1.12.0 | CPU version |
 | **Sentence Transformers** | 5.1.2 | Com PyTorch |
 | **Google ADK** | 1.14.1 | Agente framework |
+| **FastAPI** | 0.110+ | REST API framework ✨ NOVO |
+| **Streamlit** | Latest | Web interface |
 | **Gemini** | 2.5-flash | LLM via API |
 
 ## Funcionalidades Implementadas
 
-### ✅ Pipeline RAG (v1 e v2)
+### ✅ Pipeline RAG (v1, v2 e v3)
 
 **Status:** Completamente funcional
 
 **Capacidades:**
 - ✅ Busca semântica em documentos legais
-- ✅ MMR (Maximal Marginal Relevance) para diversidade
-- ✅ Similarity search para máxima relevância
+- ✅ MMR (Maximal Marginal Relevance) para diversidade (v1, v2)
+- ✅ Similarity search para máxima relevância (v3) ✨ NOVO
 - ✅ Respostas fundamentadas exclusivamente em documentos
 - ✅ Suporte a perguntas em português brasileiro
-- ✅ Contexto organizado hierarquicamente (v2)
-- ✅ Injeção de artigos introdutórios (v2)
+- ✅ Contexto organizado hierarquicamente (v2, v3)
+- ✅ Injeção de artigos introdutórios (v2, v3)
 
 **Testado com:**
 - ✅ Perguntas sobre limites de dispensa
@@ -62,22 +66,42 @@
 - ✅ Questões sobre tratamento de ME/EPP
 - ✅ Pregão eletrônico
 
-### ✅ Interface Conversacional
+### ✅ Interfaces do Usuário
 
-**Status:** Funcional via ADK Web
+**Status:** Múltiplas interfaces funcionais
+
+**1. REST API (FastAPI)** ✨ NOVO
+
+**Capacidades:**
+- ✅ 8+ endpoints RESTful (query, upload, process, metrics)
+- ✅ Documentação automática OpenAPI/Swagger (`/docs`)
+- ✅ Interface web interativa (chat, upload, processamento)
+- ✅ CORS habilitado para integrações
+- ✅ Validação robusta com Pydantic
+- ✅ Suporte às 3 versões RAG (v1, v2, v3)
+
+**2. ADK Web (Google)**
 
 **Capacidades:**
 - ✅ Chat em tempo real
 - ✅ Histórico de sessão
-- ✅ Seleção de agente (v1 ou v2)
+- ✅ Seleção de agente (v1, v2 ou v3)
 - ✅ Formatação de respostas
 - ✅ Feedback visual (loading states)
 
-**Limitações:**
+**3. Streamlit**
+
+**Capacidades:**
+- ✅ Interface web moderna
+- ✅ Upload de documentos
+- ✅ Pipeline de processamento visual
+- ✅ Consultas RAG
+
+**Limitações Gerais:**
 - ⚠️ Apenas local (localhost)
-- ⚠️ Sem autenticação
-- ⚠️ Sem persistência de histórico entre sessões
-- ⚠️ Sem multi-usuário
+- ⚠️ Sem autenticação (exceto possível integração futura)
+- ⚠️ Sem persistência de histórico entre sessões (FastAPI permite implementar)
+- ⚠️ Sem multi-usuário real (mas FastAPI suporta)
 
 ### ✅ Processamento de Documentos
 
@@ -110,6 +134,33 @@
 - ✅ `data/split_docs/` - Hierarquia de TXTs
 - ✅ `data/processed/` - CSVs tabulares
 - ✅ `data/vector_db/` - Índice FAISS persistido
+- ✅ `data/metrics/` - Banco SQLite de métricas ✨ NOVO
+
+### ✅ Sistema de Métricas
+
+**Status:** Funcional com SQLite ✨ NOVO
+
+**Capacidades:**
+- ✅ Tracking de queries RAG (pergunta, versão, tempo de resposta, sucesso/erro)
+- ✅ Tracking de processamento (arquivos, chunks, duração)
+- ✅ Estatísticas agregadas (COUNT, AVG, MIN, MAX por versão RAG)
+- ✅ Histórico completo com timestamps
+- ✅ Filtros por versão RAG e período
+- ✅ Limpeza automática de registros antigos
+- ✅ Endpoints REST para consulta (`/api/metrics/*`)
+
+**Dados Coletados:**
+- 📊 Total de queries por versão RAG
+- ⏱️ Tempos de resposta (média, mínimo, máximo)
+- ✅ Taxa de sucesso/falha
+- 📁 Arquivos processados e chunks indexados
+- 📅 Atividade nas últimas 24 horas
+
+**Banco de Dados:**
+- `data/metrics/metrics.db` (SQLite)
+- 2 tabelas: `processing_history`, `query_history`
+- Índices para performance
+- Singleton pattern para acesso global
 
 ## Limitações Conhecidas
 
@@ -126,27 +177,31 @@
 
 **Solução Futura:** Implementar autenticação (OAuth, JWT, etc.)
 
-#### 2. Sem Testes Automatizados
+#### 2. Sem Testes Completos
 
-**Problema:** Nenhum teste unitário, integração ou E2E
+**Problema:** Testes parciais (apenas métricas e RAG v3), faltam integração e E2E
 
 **Impacto:** 🔴 Alto
-- Difícil garantir qualidade
-- Refatorações são arriscadas
-- Regressões podem passar despercebidas
+- Difícil garantir qualidade total
+- Refatorações ainda são arriscadas
+- Regressões podem passar em áreas não testadas
 
-**Solução Futura:** Criar suite de testes (pytest)
+**Status Atual:** ⚠️ Parcialmente resolvido (testes unitários para métricas e RAG v3)
 
-#### 3. Sem Monitoramento/Logs
+**Solução Futura:** Completar suite de testes (pytest) para toda a aplicação
 
-**Problema:** Não há logs estruturados ou métricas
+#### 3. Sem Logging Estruturado
 
-**Impacto:** 🔴 Médio
+**Problema:** Não há logs estruturados (apenas métricas básicas)
+
+**Impacto:** 🟡 Médio
 - Difícil debugar problemas em produção
-- Não há visibilidade de performance
-- Não é possível detectar anomalias
+- Métricas SQLite ajudam mas não substituem logs completos
+- Não há rastreamento de erros com stack trace
 
-**Solução Futura:** Implementar logging (ELK, Datadog, etc.)
+**Status Atual:** ⚠️ Parcialmente resolvido (sistema de métricas SQLite)
+
+**Solução Futura:** Implementar logging estruturado (ELK, Datadog, etc.)
 
 #### 4. Dependência de API Externa (Gemini)
 
@@ -235,26 +290,46 @@
 
 ### Performance
 
-| Métrica | v1 (Básico) | v2 (Aprimorado) | Target |
-|---------|-------------|-----------------|--------|
-| **Latência média** | ~2-3s | ~3-5s | <5s |
-| **Latência p95** | ~4s | ~6s | <8s |
-| **Throughput** | ~1 req/s | ~1 req/s | 5 req/s |
-| **Uso de memória** | ~500 MB | ~600 MB | <1 GB |
+| Métrica | v1 (Básico) | v2 (Aprimorado) | v3 (Experimental) | Target |
+|---------|-------------|-----------------|-------------------|--------|
+| **Latência média** | ~2-3s | ~3-5s | ~2-4s | <5s |
+| **Latência p95** | ~4s | ~6s | ~5s | <8s |
+| **Throughput** | ~1 req/s | ~1 req/s | ~1 req/s | 5 req/s |
+| **Uso de memória** | ~500 MB | ~600 MB | ~600 MB | <1 GB |
 
-**Nota:** Métricas estimadas, não há medição formal
+**Nota:** Métricas baseadas em sistema de tracking SQLite (v0.3.0) e observação manual
+
+### Dados Reais do Sistema de Métricas ✨ NOVO
+
+**Tracking ativo desde:** v0.3.0 (2025-11-16)
+
+O sistema agora coleta métricas automáticas via SQLite:
+- ✅ Tempo de resposta de cada query (ms)
+- ✅ Taxa de sucesso/falha por versão RAG
+- ✅ Contagem de uso por versão
+- ✅ Performance de processamento de documentos
+
+**Consultar métricas:**
+```bash
+curl "http://localhost:8000/api/metrics/stats"
+```
 
 ### Qualidade das Respostas
 
 **Avaliação subjetiva** (baseada em testes manuais):
 
-| Critério | v1 | v2 | Notas |
-|----------|----|----|-------|
-| **Relevância** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | v2 melhor com contexto estruturado |
-| **Precisão** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Ambos citam artigos corretamente |
-| **Completude** | ⭐⭐⭐ | ⭐⭐⭐⭐ | v2 inclui mais contexto |
-| **Clareza** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Similar |
-| **Sem alucinações** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Ambos muito bons |
+| Critério | v1 | v2 | v3 | Notas |
+|----------|----|----|----|----|
+| **Relevância** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | v2 melhor com MMR + contexto |
+| **Precisão** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Todos citam artigos corretamente |
+| **Completude** | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | v2/v3 com mais contexto |
+| **Clareza** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Similar entre versões |
+| **Sem alucinações** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Todos excelentes |
+
+**Recomendação de uso:**
+- **v2 (padrão)**: Melhor equilíbrio qualidade/performance para produção
+- **v1**: Testes rápidos e prototipagem
+- **v3**: Experimentação com similarity search pura
 
 ### Cobertura de Documentos
 
@@ -272,19 +347,25 @@
 
 ### 🔥 Alta Prioridade
 
-- [ ] **Implementar testes automatizados**
-  - [ ] Testes unitários (tools.py, agent.py)
+- [ ] **Completar testes automatizados**
+  - [x] Testes unitários para métricas ✅ FEITO
+  - [x] Testes unitários para RAG v3 ✅ FEITO
+  - [ ] Testes unitários para RAG v1 e v2
   - [ ] Testes de integração (pipeline RAG completo)
+  - [ ] Testes de integração da REST API
   - [ ] Testes de regressão (perguntas gold com respostas esperadas)
+  - [ ] Testes E2E
 
 - [ ] **Adicionar logging estruturado**
-  - [ ] Logs de queries e respostas
-  - [ ] Logs de performance (latência, tokens)
-  - [ ] Logs de erros com stack trace
+  - [x] Sistema de métricas SQLite ✅ FEITO
+  - [ ] Logs de debug com stack trace
+  - [ ] Integração com ELK/Datadog
+  - [ ] Alertas de erro
 
 - [ ] **Implementar autenticação básica**
   - [ ] Login simples (usuário/senha)
-  - [ ] Sessões isoladas
+  - [ ] Sessões isoladas por usuário
+  - [ ] JWT ou OAuth para REST API
 
 ### 📋 Média Prioridade
 
@@ -311,27 +392,72 @@
 ### 💡 Baixa Prioridade
 
 - [ ] **Frontend customizado**
-  - [ ] UI moderna (React, Vue)
-  - [ ] Formatação de respostas (Markdown, highlight)
-  - [ ] Histórico persistido
+  - [x] Interface FastAPI web básica ✅ FEITO
+  - [x] Interface Streamlit ✅ FEITO
+  - [ ] UI moderna completa (React, Vue)
+  - [ ] Formatação avançada de respostas (Markdown, highlight)
+  - [ ] Histórico persistido no frontend
 
 - [ ] **Sistema de feedback**
   - [ ] Botões 👍/👎
   - [ ] Comentários do usuário
   - [ ] Analytics de qualidade
+  - [ ] Integração com métricas SQLite
 
 - [ ] **Exportação de conversas**
   - [ ] Export para PDF
   - [ ] Export para DOCX
   - [ ] Share link
+  - [ ] Download de histórico via API
 
 - [ ] **Múltiplos idiomas**
   - [ ] Interface em inglês
   - [ ] Perguntas em inglês (busca em PT)
 
+- [ ] **Deploy e DevOps**
+  - [ ] Containerização (Docker)
+  - [ ] CI/CD pipeline
+  - [ ] Deploy em cloud (AWS, GCP, Azure)
+  - [ ] HTTPS e domínio
+  - [ ] Monitoramento de produção
+
 ## Histórico de Versões
 
-### v1.0 (Atual) - 2025-10-30
+### v0.3.0 (Atual) - 2025-11-16
+
+**Adicionado:**
+- ✨ REST API completa com FastAPI (8+ endpoints)
+- ✨ Sistema de métricas com SQLite (tracking automático)
+- ✨ Pipeline RAG v3 (similarity search experimental)
+- ✨ Interface web interativa (chat, upload, processamento)
+- ✨ Testes unitários para métricas e RAG v3
+- ✨ Documentação completa da API REST
+- ✨ Suporte às 3 versões RAG via API
+- ✨ Validação robusta com Pydantic
+- ✨ CORS habilitado para integrações
+
+**Melhorado:**
+- 📊 Visibilidade de performance com métricas reais
+- 📝 Documentação atualizada para v0.3.0
+- 🧪 Cobertura de testes parcial (vs zero antes)
+
+**Conhecido:**
+- ⚠️ Testes incompletos (apenas métricas e RAG v3)
+- ⚠️ Sem autenticação
+- ⚠️ Apenas desenvolvimento local
+- ⚠️ Logging estruturado parcial (métricas, mas não logs completos)
+
+### v0.2.0 - 2025-11-14
+
+**Adicionado:**
+- 🏗️ Reestruturação completa para `src/` layout
+- ⚙️ Configuração centralizada com pydantic-settings
+- 🎨 Interface Streamlit
+- 📦 Pipeline de processamento integrado (REAL embeddings)
+- 🤖 Sistema multi-agente CrewAI
+- 📚 Documentação completa (8 documentos)
+
+### v0.1.0 - 2025-10-30
 
 **Adicionado:**
 - ✅ Pipeline RAG básico (v1)
@@ -341,19 +467,7 @@
 - ✅ Índice FAISS com ~4k chunks
 - ✅ Documentação completa
 
-**Conhecido:**
-- ⚠️ Sem testes
-- ⚠️ Sem autenticação
-- ⚠️ Apenas desenvolvimento local
-
-### v0.1 (Beta) - Data desconhecida
-
-**Adicionado:**
-- Pipeline RAG básico (v1)
-- Extração de documentos
-- Índice FAISS inicial
-
-**Notas:** Versão experimental
+**Notas:** Release inicial funcional
 
 ---
 
@@ -361,23 +475,26 @@
 
 ### Curto Prazo (1-2 semanas)
 
-1. **Criar testes básicos** para rag_v1 e rag_v2
-2. **Adicionar logging** (pelo menos print statements estruturados)
-3. **Documentar bugs conhecidos** em GitHub Issues
+1. **Completar testes para RAG v1 e v2** (já temos v3 e métricas ✅)
+2. **Testar REST API** em ambiente de produção simulado
+3. **Adicionar autenticação básica** à REST API (JWT)
+4. **Documentar bugs conhecidos** em GitHub Issues
 
 ### Médio Prazo (1-2 meses)
 
-1. **Implementar autenticação simples**
+1. **Implementar logging estruturado** completo (além de métricas)
 2. **Adicionar cache de respostas** (Redis ou in-memory)
-3. **Otimizar performance** (profiling, bottlenecks)
-4. **Adicionar mais 5-10 documentos legais**
+3. **Otimizar performance** da REST API (profiling, bottlenecks)
+4. **Containerização** (Docker + Docker Compose)
+5. **Adicionar mais 5-10 documentos legais**
 
 ### Longo Prazo (3-6 meses)
 
 1. **Deploy em produção** (servidor, domínio, HTTPS)
-2. **Frontend customizado** com UX melhorada
-3. **Sistema de feedback e analytics**
-4. **Integração com outras fontes** (jurisprudência, pareceres)
+2. **Frontend React/Vue** customizado com UX melhorada
+3. **Sistema de feedback** integrado com métricas SQLite
+4. **CI/CD pipeline** completo
+5. **Integração com outras fontes** (jurisprudência, pareceres)
 
 ---
 

@@ -10,12 +10,15 @@
 
 ## Visão de Produto
 
-### Onde Estamos (v1.0)
+### Onde Estamos (v0.3.0)
 
-✅ Sistema RAG funcional para consultas sobre legislação
-✅ Interface web básica
+✅ Sistema RAG funcional para consultas sobre legislação (3 versões: v1, v2, v3)
+✅ REST API completa com FastAPI (8+ endpoints) ✨ NOVO
+✅ Sistema de métricas com SQLite ✨ NOVO
+✅ Múltiplas interfaces (ADK Web, Streamlit, FastAPI Web) ✨ MELHORADO
 ✅ 4 documentos legais indexados
 ✅ Respostas fundamentadas e precisas
+✅ Testes unitários parciais (métricas, RAG v3) ✨ NOVO
 
 ### Onde Queremos Chegar (v2.0)
 
@@ -43,11 +46,18 @@
 
 ### 🔴 Prioridade Alta (Críticas)
 
-#### 1. Implementar Testes Automatizados
+#### 1. Completar Testes Automatizados
 
-**Problema:** Sem testes, não há garantia de qualidade
+**Problema:** Testes parciais (apenas métricas e RAG v3) ⚠️ PARCIALMENTE RESOLVIDO
 
-**Proposta:**
+**Status Atual (v0.3.0):**
+- ✅ Testes unitários para sistema de métricas (15+ testes)
+- ✅ Testes unitários para RAG v3 (8 testes)
+- ❌ Testes para RAG v1 e v2 (pendente)
+- ❌ Testes de integração da REST API (pendente)
+- ❌ Testes E2E (pendente)
+
+**Proposta (próximos passos):**
 - **Testes Unitários** (rag_v1, rag_v2)
   ```python
   def test_consultar_base_rag():
@@ -72,11 +82,20 @@
 **Estimativa:** 2-3 semanas
 **Impacto:** 🔴 Crítico (reduz bugs, facilita refatoração)
 
-#### 2. Adicionar Logging Estruturado
+#### 2. Completar Logging Estruturado
 
-**Problema:** Sem logs, impossível debugar produção
+**Problema:** Logging parcial (métricas SQLite, mas sem logs completos) ⚠️ PARCIALMENTE RESOLVIDO
 
-**Proposta:**
+**Status Atual (v0.3.0):**
+- ✅ Sistema de métricas SQLite com tracking de queries e processamento
+- ✅ Estatísticas agregadas (COUNT, AVG, MIN, MAX)
+- ✅ Histórico completo com timestamps
+- ✅ Endpoints REST para consulta de métricas
+- ❌ Logs estruturados com stack trace (pendente)
+- ❌ Integração com ELK/Datadog (pendente)
+- ❌ Alertas automáticos (pendente)
+
+**Proposta (próximos passos):**
 ```python
 import logging
 from pythonjsonlogger import jsonlogger
@@ -444,18 +463,34 @@ def salvar_feedback(query, response, rating, comment=None):
 
 ## Roadmap
 
-### Q1 2025 (Jan-Mar) - Fundações
+### v0.3.0 (Nov 2025) - REST API e Métricas ✅ CONCLUÍDO
+
+**Objetivo:** Infraestrutura moderna para integração e monitoramento
+
+- [x] ✅ REST API completa com FastAPI (8+ endpoints)
+- [x] ✅ Sistema de métricas com SQLite
+- [x] ✅ RAG v3 (similarity search experimental)
+- [x] ✅ Interface web interativa
+- [x] ✅ Testes unitários para métricas e RAG v3
+- [x] ✅ Documentação da API REST
+
+**Entregável:** ✅ Sistema com API REST pronta para integração e métricas ativas
+
+### Q1 2025 (Dez-Mar) - Fundações Completas
 
 **Objetivo:** Preparar para produção
 
-- [x] ✅ Documentação completa (você está aqui!)
-- [ ] 🔴 Implementar testes automatizados
-- [ ] 🔴 Adicionar logging estruturado
-- [ ] 🔴 Implementar autenticação básica
+- [x] ✅ Documentação completa
+- [x] ⚠️ Testes automatizados (parcial: métricas e RAG v3)
+- [x] ⚠️ Logging/métricas (parcial: SQLite metrics)
+- [ ] 🔴 Completar testes (RAG v1, v2, API, E2E)
+- [ ] 🔴 Completar logging estruturado (stack traces, ELK)
+- [ ] 🔴 Implementar autenticação (JWT para API)
 - [ ] 🟡 Adicionar 10 novos documentos (leis fundamentais)
 - [ ] 🟡 Deploy em servidor (staging)
+- [ ] 🟡 Containerização (Docker + Docker Compose)
 
-**Entregável:** Sistema testado e seguro em staging
+**Entregável:** Sistema testado, seguro e containerizado em staging
 
 ### Q2 2025 (Abr-Jun) - Otimização
 
@@ -475,12 +510,13 @@ def salvar_feedback(query, response, rating, comment=None):
 **Objetivo:** Agregar novas fontes e funcionalidades
 
 - [ ] 🟡 Jurisprudência (TCU, STF)
-- [ ] 🟢 Analytics e dashboard
-- [ ] 🟢 Export de conversas
-- [ ] 🟡 API pública (para integrações)
+- [ ] 🟢 Analytics e dashboard (aproveitar métricas SQLite existentes)
+- [ ] 🟢 Export de conversas (via API REST)
+- [x] ⚠️ API pública (REST API já existe, falta documentação externa)
 - [ ] 🟡 Melhorias baseadas em feedback de usuários
+- [ ] 🟡 Integração com frontends externos via API REST
 
-**Entregável:** Plataforma completa com 50+ documentos
+**Entregável:** Plataforma completa com 50+ documentos e integrações ativas
 
 ### Q4 2025 (Out-Dez) - Inteligência
 
