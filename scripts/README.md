@@ -1,17 +1,57 @@
 # Scripts de Execução AMLDO
 
-Scripts para executar as diferentes interfaces do sistema AMLDO.
+Script multiplataforma em Python para executar as aplicações do AMLDO com menu interativo.
 
-## 🚀 Scripts Disponíveis
+## 🚀 Uso Rápido
 
-### 1. `run_api.sh` - FastAPI REST API
-Execute a API REST completa com documentação Swagger.
+### Menu Interativo (Recomendado)
 
 ```bash
-./scripts/run_api.sh
+python scripts/run.py
 ```
 
-**Porta:** 8000
+Você verá um menu com as opções:
+```
+1 - FastAPI REST API (porta 8000)
+2 - Streamlit Web App (porta 8501)
+3 - Google ADK Interface (porta 8080)
+4 - Todas as aplicações (8000, 8501, 8080)
+0 - Sair
+```
+
+### Execução Direta (sem menu)
+
+```bash
+# FastAPI REST API
+python scripts/run.py --api
+
+# Streamlit Web App
+python scripts/run.py --streamlit
+
+# Google ADK Interface
+python scripts/run.py --adk
+
+# Todas as aplicações
+python scripts/run.py --all
+```
+
+### Aliases curtos
+
+```bash
+python scripts/run.py -a   # FastAPI
+python scripts/run.py -s   # Streamlit
+python scripts/run.py -k   # Google ADK
+python scripts/run.py -A   # Todas
+```
+
+---
+
+## 📋 Aplicações Disponíveis
+
+### 1. FastAPI REST API (porta 8000)
+
+API REST completa com documentação Swagger.
+
 **Acessos:**
 - Interface Web: http://127.0.0.1:8000
 - Swagger Docs: http://127.0.0.1:8000/docs
@@ -26,14 +66,10 @@ Execute a API REST completa com documentação Swagger.
 
 ---
 
-### 2. `run_streamlit.sh` - Streamlit Web App
-Execute a interface web interativa com Streamlit.
+### 2. Streamlit Web App (porta 8501)
 
-```bash
-./scripts/run_streamlit.sh
-```
+Interface web interativa com Streamlit.
 
-**Porta:** 8501
 **Acesso:** http://localhost:8501
 
 **Páginas:**
@@ -43,14 +79,10 @@ Execute a interface web interativa com Streamlit.
 
 ---
 
-### 3. `run_adk.sh` - Google ADK Interface
-Execute a interface conversacional com agentes RAG.
+### 3. Google ADK Interface (porta 8080)
 
-```bash
-./scripts/run_adk.sh
-```
+Interface conversacional com agentes RAG.
 
-**Porta:** 8080
 **Acesso:** http://localhost:8080
 
 **Agentes disponíveis:**
@@ -60,154 +92,256 @@ Execute a interface conversacional com agentes RAG.
 
 ---
 
-### 4. `run_all.sh` - Todas as Aplicações
-Execute todas as aplicações simultaneamente.
+### 4. Todas as Aplicações
 
-```bash
-./scripts/run_all.sh
-```
+Execute todas simultaneamente em portas diferentes.
 
 **Portas:**
 - FastAPI: 8000
 - Streamlit: 8501
 - Google ADK: 8080
 
-**Logs:** Os logs são salvos em `logs/`:
+**Logs:** Salvos em `logs/`:
 - `logs/api.log` - FastAPI
 - `logs/streamlit.log` - Streamlit
 - `logs/adk.log` - Google ADK
 
-**Para parar:** Pressione `Ctrl+C` (encerra todas as aplicações)
+**Para parar:** Pressione `Ctrl+C`
 
 ---
 
-## 📋 Pré-requisitos
+## 🔧 Pré-requisitos
 
-Antes de executar qualquer script, certifique-se de que:
+O script verifica automaticamente os seguintes pré-requisitos:
 
-1. **Virtual environment está criado e ativado:**
-   ```bash
-   python3.11 -m venv venv
-   source venv/bin/activate  # No Windows: venv\Scripts\activate
-   ```
+### 1. Python 3.11+
 
-2. **Dependências estão instaladas:**
-   ```bash
-   # Todas as dependências (recomendado)
-   pip install -e ".[adk,streamlit,dev]"
+```bash
+python --version
+# Deve ser 3.11 ou superior
+```
 
-   # Ou específicas
-   pip install -e .              # Base
-   pip install -e ".[adk]"       # + Google ADK
-   pip install -e ".[streamlit]" # + Streamlit
-   ```
+### 2. Pacote AMLDO Instalado
 
-3. **Arquivo `.env` está configurado:**
-   ```bash
-   cp .env.example .env
-   # Edite .env e adicione GOOGLE_API_KEY
-   ```
+```bash
+# Se ainda não instalou
+pip install -e .
 
-4. **Vector store existe:**
-   ```bash
-   # Verificar se existe
-   ls data/vector_db/v1_faiss_vector_db/
+# Com extras (adk, streamlit)
+pip install -e ".[adk,streamlit]"
+```
 
-   # Se não existir, processar documentos primeiro
-   # (use Streamlit Pipeline ou notebooks)
-   ```
+### 3. Arquivo .env Configurado
+
+```bash
+# Criar .env
+cp .env.example .env
+
+# Editar e adicionar GOOGLE_API_KEY
+# GOOGLE_API_KEY=sua_chave_aqui
+```
 
 ---
 
-## 🔧 Configuração Avançada
+## 💻 Compatibilidade
 
-### Variáveis de Ambiente
+✅ **Windows** (PowerShell, CMD, Git Bash)
+✅ **Linux** (Ubuntu, Debian, Fedora, etc.)
+✅ **macOS**
+✅ **WSL** (Windows Subsystem for Linux)
 
-Você pode configurar portas e hosts via variáveis de ambiente:
+O script:
+- Usa Python puro (sem dependências shell)
+- Detecta automaticamente o sistema operacional
+- Funciona em qualquer terminal que tenha Python
 
-```bash
-# FastAPI
-export API_HOST=0.0.0.0
-export API_PORT=8080
-./scripts/run_api.sh
+---
 
-# Streamlit
-export STREAMLIT_PORT=8502
-./scripts/run_streamlit.sh
+## 🎨 Recursos
+
+### ✅ Verificação de Pré-requisitos
+
+O script verifica automaticamente:
+- Se está no diretório correto
+- Se o pacote `amldo` está instalado
+- Se o arquivo `.env` existe
+
+### ✅ Cores e Formatação
+
+- Output colorido (funciona em todos os sistemas)
+- Banner visual
+- Mensagens claras e informativas
+
+### ✅ Gerenciamento de Processos
+
+- Inicia aplicações em background (modo `--all`)
+- Cleanup automático ao pressionar Ctrl+C
+- Logs separados para cada aplicação
+- Detecção de falhas em processos
+
+### ✅ Multiplataforma
+
+- Sem dependências de shell (bash, sh, etc.)
+- Funciona igualmente em Windows, Linux e Mac
+- Trata diferenças de sistema operacional automaticamente
+
+---
+
+## 🐛 Troubleshooting
+
+### ❌ Erro: Keras 3 incompatível com Transformers
+
+**Erro completo:**
+```
+ValueError: Your currently installed version of Keras is Keras 3, but this is not yet supported in Transformers.
+Please install the backwards-compatible tf-keras package with `pip install tf-keras`.
 ```
 
-### Permissões (Linux/Mac)
-
-Os scripts já foram tornados executáveis. Se necessário:
-
+**Solução (30 segundos):**
 ```bash
-chmod +x scripts/*.sh
+pip install tf-keras
 ```
 
-### Windows (WSL)
-
-Os scripts funcionam no WSL (Windows Subsystem for Linux). Para executar no Windows nativo, use:
-
+**Verificar:**
 ```bash
-bash scripts/run_api.sh
+python -c "import tf_keras; print('✅ OK!')"
+python scripts/run.py --api
 ```
 
-Ou crie arquivos `.bat` equivalentes.
+📖 **Mais detalhes:** [.instructions/FIX_LANGCHAIN_HUGGINGFACE.md](../.instructions/FIX_LANGCHAIN_HUGGINGFACE.md)
+
+---
+
+### Erro: "Execute este script do diretório raiz do projeto"
+
+**Solução:**
+```bash
+cd /caminho/para/AMLDO
+python scripts/run.py
+```
+
+### Erro: "Pacote 'amldo' não instalado"
+
+**Solução:**
+```bash
+pip install -e .
+# ou com extras
+pip install -e ".[adk,streamlit]"
+```
+
+### Erro: "Comando 'adk' não encontrado"
+
+**Solução:**
+```bash
+pip install -e ".[adk]"
+```
+
+### Aviso: "Arquivo .env não encontrado"
+
+**Solução:**
+```bash
+cp .env.example .env
+# Edite .env e adicione GOOGLE_API_KEY
+```
+
+### Porta já em uso
+
+**Verificar processos:**
+```bash
+# Linux/Mac
+lsof -i :8000
+lsof -i :8501
+lsof -i :8080
+
+# Windows
+netstat -ano | findstr :8000
+netstat -ano | findstr :8501
+netstat -ano | findstr :8080
+```
+
+**Matar processo:**
+```bash
+# Linux/Mac
+kill -9 <PID>
+
+# Windows (PowerShell como Admin)
+taskkill /PID <PID> /F
+```
+
+### Aplicação não inicia
+
+**Ver logs:**
+```bash
+# Se usou --all
+cat logs/api.log
+cat logs/streamlit.log
+cat logs/adk.log
+
+# Windows
+type logs\api.log
+type logs\streamlit.log
+type logs\adk.log
+```
 
 ---
 
 ## 📚 Documentação Adicional
 
-- **Setup Rápido:** `.instructions/SETUP_VENV_RAPIDO.md`
-- **Setup Windows:** `.instructions/SETUP_WINDOWS_RAPIDO.md`
-- **Troubleshooting:** `.instructions/TROUBLESHOOTING_WINDOWS.md`
-- **Guia de WebApps:** `.instructions/WEBAPPS_GUIDE.md`
-- **Quick Start:** `.instructions/QUICK_START_SCRIPTS.md`
-- **Documentação Técnica:** `docs/`
-- **Guia de Desenvolvimento:** `CLAUDE.md`
+- **Setup Rápido:** `../.instructions/README.md`
+- **Troubleshooting:** `../.instructions/TROUBLESHOOTING_WINDOWS.md`
+- **Guia Técnico:** `../CLAUDE.md`
+- **Documentação Completa:** `../docs/`
 
 ---
 
-## 🐛 Problemas Comuns
+## 💡 Exemplos de Uso
 
-### Erro: "Virtual environment não encontrado"
+### Desenvolvimento
+
 ```bash
-python3.11 -m venv venv
-source venv/bin/activate
-pip install -e ".[adk,streamlit,dev]"
+# Testar FastAPI durante desenvolvimento
+python scripts/run.py --api
 ```
 
-### Erro: "Pacote 'amldo' não instalado"
+### Demonstração
+
 ```bash
-source venv/bin/activate
-pip install -e .
+# Mostrar todas as interfaces
+python scripts/run.py --all
 ```
 
-### Erro: "GOOGLE_API_KEY não configurado"
+### Produção (Docker recomendado)
+
+Para produção, use Docker Compose:
 ```bash
-cp .env.example .env
-# Edite .env e adicione sua chave do Google
+docker-compose up -d
 ```
 
-### Erro: "FAISS deserialization error"
-Certifique-se de que o vector store foi criado corretamente. Se necessário, reprocesse os documentos usando o Streamlit Pipeline ou os notebooks.
+---
 
-### Porta já em uso
-```bash
-# Verificar processos usando a porta
-lsof -i :8000  # Linux/Mac
-netstat -ano | findstr :8000  # Windows
+## 🔗 Scripts Disponíveis
 
-# Matar processo
-kill -9 <PID>  # Linux/Mac
-taskkill /PID <PID> /F  # Windows
-```
+| Script | Descrição |
+|--------|-----------|
+| `run.py` | **Script principal** - Menu interativo para todas as aplicações |
+| `run_tests.sh` | Executa suite de testes (pytest) |
+
+---
+
+## ✨ Vantagens do Script Python
+
+1. **Multiplataforma** - Funciona em qualquer OS com Python
+2. **Sem dependências** - Não precisa de bash/sh/PowerShell
+3. **Menu interativo** - Fácil de usar
+4. **Verificações automáticas** - Valida pré-requisitos
+5. **Gerenciamento robusto** - Cleanup correto de processos
+6. **Logs organizados** - Um arquivo por aplicação
+7. **Cores em todos OS** - Output bonito em Windows, Linux e Mac
 
 ---
 
 ## 📞 Suporte
 
-Para mais informações:
-- Documentação: `docs/`
-- Issues: GitHub Issues
-- Guia do Desenvolvedor: `CLAUDE.md`
+- **Documentação:** `../docs/`
+- **Issues:** GitHub Issues
+- **Guias:** `../.instructions/`

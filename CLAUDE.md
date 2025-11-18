@@ -46,19 +46,26 @@ pre-commit install
 
 ## Running the Application
 
-### 🚀 Quick Start - Use Shell Scripts (RECOMMENDED)
+### 🚀 Quick Start - Use Python Script (RECOMMENDED)
 
-The easiest way to run the applications is using the shell scripts in `scripts/`:
+The easiest way to run the applications is using the Python menu script:
 
 ```bash
-# Run individual applications
-./scripts/run_api.sh         # FastAPI REST API (port 8000)
-./scripts/run_streamlit.sh   # Streamlit Web App (port 8501)
-./scripts/run_adk.sh         # Google ADK Interface (port 8080)
+# Interactive menu (recommended)
+python scripts/run.py
 
-# Or run ALL applications at once
-./scripts/run_all.sh         # All apps simultaneously with logs
+# Or direct commands
+python scripts/run.py --api         # FastAPI REST API (port 8000)
+python scripts/run.py --streamlit   # Streamlit Web App (port 8501)
+python scripts/run.py --adk         # Google ADK Interface (port 8080)
+python scripts/run.py --all         # All apps simultaneously with logs
 ```
+
+**Advantages:**
+- ✅ Works on Windows, Linux, and Mac (no shell required)
+- ✅ Interactive menu with numbered options
+- ✅ Automatic prerequisite checking
+- ✅ Process management and cleanup
 
 **See `scripts/README.md` for detailed documentation.**
 
@@ -67,8 +74,8 @@ The easiest way to run the applications is using the shell scripts in `scripts/`
 ### Option 1: Google ADK Interface (Conversational RAG)
 
 ```bash
-# Using script (recommended)
-./scripts/run_adk.sh
+# Using Python script (recommended)
+python scripts/run.py --adk
 
 # Or direct command
 adk web
@@ -81,8 +88,8 @@ Then access http://localhost:8080 and select agent:
 ### Option 2: Streamlit Web Interface (Full pipeline)
 
 ```bash
-# Using script (recommended)
-./scripts/run_streamlit.sh
+# Using Python script (recommended)
+python scripts/run.py --streamlit
 
 # Or direct command
 streamlit run src/amldo/interfaces/streamlit/app.py
@@ -97,8 +104,8 @@ Then access http://localhost:8501
 ### Option 3: FastAPI REST API ✨ (Recommended for integration)
 
 ```bash
-# Using script (recommended)
-./scripts/run_api.sh
+# Using Python script (recommended)
+python scripts/run.py --api
 
 # Or direct command
 amldo-api
@@ -480,11 +487,12 @@ pip install -e ".[dev]"
 
 **Common Commands:**
 ```bash
-# Run interfaces (RECOMMENDED: use shell scripts)
-./scripts/run_all.sh             # All apps at once ⭐
-./scripts/run_api.sh             # FastAPI (port 8000)
-./scripts/run_streamlit.sh       # Streamlit (port 8501)
-./scripts/run_adk.sh             # Google ADK (port 8080)
+# Run interfaces (RECOMMENDED: use Python script)
+python scripts/run.py            # Interactive menu ⭐
+python scripts/run.py --all      # All apps at once
+python scripts/run.py --api      # FastAPI (port 8000)
+python scripts/run.py --streamlit  # Streamlit (port 8501)
+python scripts/run.py --adk      # Google ADK (port 8080)
 
 # Or direct commands
 adk web                          # Google ADK

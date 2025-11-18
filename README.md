@@ -65,8 +65,11 @@ Copy-Item .env.example .env
 # Edite .env e adicione GOOGLE_API_KEY
 
 # 6. Executar (escolha uma)
-# Nota: No Windows, use bash se tiver Git Bash ou WSL
-bash scripts/run_api.sh         # REST API (recomendado)
+# Script Python (funciona em qualquer OS) ⭐
+python scripts/run.py           # Menu interativo
+python scripts/run.py --api     # REST API
+python scripts/run.py --streamlit  # Streamlit
+python scripts/run.py --adk     # Google ADK
 # OU comandos diretos:
 amldo-api                       # REST API
 adk web                         # Google ADK
@@ -75,7 +78,7 @@ streamlit run src\amldo\interfaces\streamlit\app.py   # Streamlit
 
 📘 **Guias completos**:
 - Setup: [.instructions/SETUP_WINDOWS_RAPIDO.md](.instructions/SETUP_WINDOWS_RAPIDO.md)
-- Scripts: [scripts/README.md](scripts/README.md)
+- **Scripts:** [scripts/README.md](scripts/README.md) ⭐
 
 ---
 
@@ -100,11 +103,12 @@ pip install -e ".[api,adk,streamlit]"
 cp .env.example .env
 # Edite .env e adicione GOOGLE_API_KEY
 
-# 6. Executar (use os scripts! ⭐)
-./scripts/run_all.sh        # Todas as apps
-./scripts/run_api.sh        # REST API
-./scripts/run_streamlit.sh  # Streamlit
-./scripts/run_adk.sh        # Google ADK
+# 6. Executar (use o script Python! ⭐)
+python scripts/run.py       # Menu interativo
+python scripts/run.py --all # Todas as apps
+python scripts/run.py --api # REST API
+python scripts/run.py --streamlit  # Streamlit
+python scripts/run.py --adk # Google ADK
 # OU comandos diretos:
 amldo-api                   # REST API
 adk web                     # Google ADK
@@ -113,7 +117,7 @@ streamlit run src/amldo/interfaces/streamlit/app.py  # Streamlit
 
 📘 **Guias completos**:
 - Setup: [.instructions/SETUP_VENV_RAPIDO.md](.instructions/SETUP_VENV_RAPIDO.md) ou [docs/VENV_GUIDE.md](docs/VENV_GUIDE.md)
-- Scripts: [scripts/README.md](scripts/README.md) ⭐
+- **Scripts:** [scripts/README.md](scripts/README.md) ⭐
 
 **REST API:** http://localhost:8000 (documentação automática em `/docs`)
 **Google ADK:** http://localhost:8080 (selecione agente `rag_v2`)

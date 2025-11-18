@@ -30,7 +30,11 @@
       "Bash(docs/README.md)",
       "Bash(chmod:*)",
       "Bash(bash:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(sudo apt update:*)",
+      "Bash(sudo apt install:*)",
+      "Bash(adk web:*)",
+      "Bash(pip search:*)"
     ],
     "deny": [],
     "ask": []

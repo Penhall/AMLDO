@@ -1,10 +1,37 @@
-# ⚡ Fix Rápido - Erro langchain_huggingface
+# ⚡ Fix Rápido - Erros de Dependências
 
-> **Solução imediata** para `ModuleNotFoundError: No module named 'langchain_huggingface'`
+> **Soluções imediatas** para erros comuns de dependências no AMLDO
 
 ---
 
-## 🎯 O Problema
+## 🔴 Problema 1: Keras 3 Incompatível
+
+### Erro
+
+```
+ValueError: Your currently installed version of Keras is Keras 3, but this is not yet supported in Transformers.
+Please install the backwards-compatible tf-keras package with `pip install tf-keras`.
+```
+
+### ✅ Solução (30 segundos)
+
+```bash
+pip install tf-keras
+```
+
+**Pronto!** O transformers agora vai usar `tf-keras` que é compatível.
+
+### Verificar
+
+```bash
+python -c "import tf_keras; print('✅ tf-keras instalado!')"
+```
+
+---
+
+## 🟡 Problema 2: langchain_huggingface não encontrado
+
+### Erro
 
 Você executou `amldo-api` e recebeu:
 
@@ -149,7 +176,94 @@ Agora está corrigido! ✅
 
 ---
 
+## 🔵 Problema 3: AttributeError com MessageFactory
+
+### Erro
+
+```
+AttributeError: 'MessageFactory' object has no attribute 'GetPrototype'
+```
+
+### ✅ Solução
+
+Este erro geralmente está relacionado a incompatibilidades de versão do protobuf. Tente:
+
+```bash
+pip install --upgrade protobuf
+```
+
+Ou force uma versão específica compatível:
+
+```bash
+pip install "protobuf<4.0.0"
+```
+
+---
+
+## 🟢 Problema 4: TensorFlow oneDNN
+
+### Aviso
+
+```
+I tensorflow/core/util/port.cc:153] oneDNN custom operations are on.
+```
+
+Este é apenas um **aviso informativo**, não um erro. Para desabilitar se desejar:
+
+```bash
+# Windows (PowerShell)
+$env:TF_ENABLE_ONEDNN_OPTS="0"
+
+# Linux/Mac
+export TF_ENABLE_ONEDNN_OPTS=0
+```
+
+Ou adicione ao `.env`:
+```
+TF_ENABLE_ONEDNN_OPTS=0
+```
+
+---
+
+## 🛠️ Solução Completa (se nada funcionou)
+
+Se você está tendo múltiplos erros, reinstale tudo com versões compatíveis:
+
+```bash
+# 1. Instalar tf-keras (Keras compatível)
+pip install tf-keras
+
+# 2. Instalar langchain-huggingface
+pip install langchain-huggingface
+
+# 3. Reinstalar projeto
+pip install -e ".[api,adk,streamlit]" --force-reinstall
+
+# 4. Verificar
+python scripts/run.py --api
+```
+
+---
+
+## 📋 Resumo de Comandos Rápidos
+
+```bash
+# Keras 3 incompatível
+pip install tf-keras
+
+# langchain_huggingface faltando
+pip install langchain-huggingface
+
+# protobuf incompatível
+pip install --upgrade protobuf
+
+# Reinstalar tudo
+pip install -e ".[api,adk,streamlit]" --force-reinstall
+```
+
+---
+
 **Criado para**: AMLDO v0.3.0
-**Sistema**: Windows
-**Tempo de fix**: ~2-3 minutos
-**Última atualização**: 2025-11-16
+**Sistemas**: Windows, Linux, Mac
+**Tempo de fix**: ~30 segundos a 3 minutos
+**Última atualização**: 2025-11-17
