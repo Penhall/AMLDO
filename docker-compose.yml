@@ -1,0 +1,169 @@
+# ============================================================================
+# Docker Compose - AMLDO v0.3.0
+# ============================================================================
+# Uso:
+#   docker-compose up          # Iniciar todos os serviços
+#   docker-compose up api      # Apenas API
+#   docker-compose down        # Parar tudo
+#   docker-compose logs -f     # Ver logs
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # --------------------------------------------------------------------------
+  # FastAPI - REST API Principal
+  # --------------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: amldo:latest
+    container_name: amldo-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - VECTOR_DB_PATH=/data/vector_db
+      - METRICS_DB_PATH=/data/metrics/metrics.db
+    volumes:
+      - ./data:/data
+      - ./logs:/app/logs
+      - vector_db:/data/vector_db
+      - metrics_db:/data/metrics
+    networks:
+      - amldo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    command: amldo-api
+
+  # --------------------------------------------------------------------------
+  # Streamlit - Interface Web
+  # --------------------------------------------------------------------------
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: amldo:latest
+    container_name: amldo-streamlit
+    restart: unless-stopped
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - VECTOR_DB_PATH=/data/vector_db
+    volumes:
+      - ./data:/data
+      - ./logs:/app/logs
+      - vector_db:/data/vector_db
+    networks:
+      - amldo-network
+    depends_on:
+      - api
+    command: streamlit run src/amldo/interfaces/streamlit/app.py --server.port=8501 --server.address=0.0.0.0
+
+  # --------------------------------------------------------------------------
+  # Google ADK Agent
+  # --------------------------------------------------------------------------
+  adk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: amldo:latest
+    container_name: amldo-adk
+    restart: unless-stopped
+    ports:
+      - "${ADK_PORT:-8080}:8080"
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - VECTOR_DB_PATH=/data/vector_db
+    volumes:
+      - ./data:/data
+      - ./logs:/app/logs
+      - vector_db:/data/vector_db
+    networks:
+      - amldo-network
+    depends_on:
+      - api
+    command: adk web
+
+  # --------------------------------------------------------------------------
+  # Nginx - Reverse Proxy (opcional)
+  # --------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: amldo-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - amldo-network
+    depends_on:
+      - api
+      - streamlit
+    profiles:
+      - production  # Apenas em produção
+
+# ----------------------------------------------------------------------------
+# Volumes Persistentes
+# ----------------------------------------------------------------------------
+volumes:
+  vector_db:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/vector_db
+
+  metrics_db:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/metrics
+
+# ----------------------------------------------------------------------------
+# Networks
+# ----------------------------------------------------------------------------
+networks:
+  amldo-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# ----------------------------------------------------------------------------
+# Uso Avançado
+# ----------------------------------------------------------------------------
+# 1. Development:
+#    docker-compose up api streamlit
+#
+# 2. Production (com nginx):
+#    docker-compose --profile production up -d
+#
+# 3. Rebuild:
+#    docker-compose build --no-cache
+#
+# 4. Logs:
+#    docker-compose logs -f api
+#
+# 5. Shell:
+#    docker-compose exec api bash
+# ----------------------------------------------------------------------------

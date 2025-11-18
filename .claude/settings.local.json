@@ -27,7 +27,10 @@
       "Bash(export:*)",
       "Bash(git rm:*)",
       "Bash(git restore:*)",
-      "Bash(docs/README.md)"
+      "Bash(docs/README.md)",
+      "Bash(chmod:*)",
+      "Bash(bash:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

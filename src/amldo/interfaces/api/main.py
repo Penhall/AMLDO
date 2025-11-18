@@ -7,6 +7,7 @@ Versão: 0.3.0
 """
 
 from pathlib import Path
+import sys
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -106,6 +107,10 @@ async def startup_event():
     Path("data/raw").mkdir(parents=True, exist_ok=True)
     Path("data/vector_db").mkdir(parents=True, exist_ok=True)
     Path("data/metrics").mkdir(parents=True, exist_ok=True)
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
     print("🚀 AMLDO API iniciada com sucesso!")
     print(f"📊 Documentação: http://{settings.api_host}:{settings.api_port}/docs")

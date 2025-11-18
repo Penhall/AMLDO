@@ -6,6 +6,10 @@
 [![LangChain](https://img.shields.io/badge/LangChain-1.0-green.svg)](https://langchain.com/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110-teal.svg)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/Penhall/AMLDO/workflows/CI/badge.svg)](https://github.com/Penhall/AMLDO/actions)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](Dockerfile)
+[![Tests](https://img.shields.io/badge/tests-46%20passed-success.svg)](tests/)
+[![Code Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](https://codecov.io/gh/Penhall/AMLDO)
 
 ## 📋 Visão Geral
 
@@ -34,7 +38,48 @@ O **AMLDO** permite consultas em linguagem natural sobre legislação de licita�
 - Python **3.11** ou superior
 - API Key do Google Gemini ([Obter aqui](https://makersuite.google.com/app/apikey))
 
-### Instalação Rápida (5 minutos)
+### Instalação Rápida
+
+⚠️ **IMPORTANTE**: Os comandos variam entre Windows e Linux/WSL/macOS.
+
+#### 🪟 **Windows** (PowerShell)
+
+```powershell
+# 1. Clonar repositório
+git clone https://github.com/Penhall/AMLDO.git
+cd AMLDO
+
+# 2. Criar ambiente virtual
+python -m venv venv
+
+# 3. Ativar venv (pode precisar habilitar scripts)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+.\venv\Scripts\Activate.ps1
+
+# 4. Instalar dependências
+python -m pip install --upgrade pip
+pip install -e ".[api,adk,streamlit]"
+
+# 5. Configurar .env
+Copy-Item .env.example .env
+# Edite .env e adicione GOOGLE_API_KEY
+
+# 6. Executar (escolha uma)
+# Nota: No Windows, use bash se tiver Git Bash ou WSL
+bash scripts/run_api.sh         # REST API (recomendado)
+# OU comandos diretos:
+amldo-api                       # REST API
+adk web                         # Google ADK
+streamlit run src\amldo\interfaces\streamlit\app.py   # Streamlit
+```
+
+📘 **Guias completos**:
+- Setup: [.instructions/SETUP_WINDOWS_RAPIDO.md](.instructions/SETUP_WINDOWS_RAPIDO.md)
+- Scripts: [scripts/README.md](scripts/README.md)
+
+---
+
+#### 🐧 **Linux / macOS / WSL**
 
 ```bash
 # 1. Clonar repositório
@@ -43,31 +88,63 @@ cd AMLDO
 
 # 2. Criar ambiente virtual
 python3.11 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# 3. Instalar dependências
+# 3. Ativar venv
+source venv/bin/activate
+
+# 4. Instalar dependências
 pip install --upgrade pip
 pip install -e ".[api,adk,streamlit]"
 
-# 4. Configurar variáveis de ambiente
+# 5. Configurar .env
 cp .env.example .env
-# Edite .env e adicione sua GOOGLE_API_KEY
+# Edite .env e adicione GOOGLE_API_KEY
 
-# 5. Rodar sistema (escolha uma interface)
-
-# Opção 1: REST API (Recomendado para produção)
-amldo-api
-
-# Opção 2: Google ADK (CLI)
-adk web
-
-# Opção 3: Streamlit (Web interativa)
-streamlit run src/amldo/interfaces/streamlit/app.py
+# 6. Executar (use os scripts! ⭐)
+./scripts/run_all.sh        # Todas as apps
+./scripts/run_api.sh        # REST API
+./scripts/run_streamlit.sh  # Streamlit
+./scripts/run_adk.sh        # Google ADK
+# OU comandos diretos:
+amldo-api                   # REST API
+adk web                     # Google ADK
+streamlit run src/amldo/interfaces/streamlit/app.py  # Streamlit
 ```
+
+📘 **Guias completos**:
+- Setup: [.instructions/SETUP_VENV_RAPIDO.md](.instructions/SETUP_VENV_RAPIDO.md) ou [docs/VENV_GUIDE.md](docs/VENV_GUIDE.md)
+- Scripts: [scripts/README.md](scripts/README.md) ⭐
 
 **REST API:** http://localhost:8000 (documentação automática em `/docs`)
 **Google ADK:** http://localhost:8080 (selecione agente `rag_v2`)
 **Streamlit:** http://localhost:8501
+
+### 🐳 Instalação com Docker (Recomendado)
+
+```bash
+# 1. Clonar repositório
+git clone https://github.com/Penhall/AMLDO.git
+cd AMLDO
+
+# 2. Configurar .env
+cp .env.example .env
+# Edite .env e adicione GOOGLE_API_KEY
+
+# 3. Iniciar com Docker Compose
+docker-compose up -d
+
+# 4. Acessar
+# API: http://localhost:8000
+# Streamlit: http://localhost:8501
+# ADK: http://localhost:8080
+```
+
+**Comandos úteis:**
+```bash
+docker-compose logs -f api     # Ver logs
+docker-compose down            # Parar tudo
+docker-compose restart api     # Reiniciar API
+```
 
 ### Teste Rápido
 

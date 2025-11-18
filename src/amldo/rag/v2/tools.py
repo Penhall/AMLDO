@@ -30,7 +30,11 @@ K = settings.search_k
 SEARCH_TYPE = settings.search_type
 
 # LLM
-llm = init_chat_model(settings.llm_model, model_provider=settings.llm_provider)
+_llm_kwargs: dict = {}
+if settings.llm_provider == "google_genai":
+    _llm_kwargs["google_api_key"] = settings.google_api_key
+
+llm = init_chat_model(settings.llm_model, model_provider=settings.llm_provider, **_llm_kwargs)
 
 # Dataframe com artigos 0 (introduções de capítulos/títulos)
 try:

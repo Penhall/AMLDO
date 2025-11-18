@@ -1,0 +1,94 @@
+# Configuração de cobertura de código para AMLDO
+# Usado por pytest-cov e coverage.py
+
+[run]
+# Diretório fonte
+source = src/amldo
+
+# Branch coverage (cobre condicionais)
+branch = True
+
+# Arquivos a omitir
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */venv/*
+    */env/*
+    */.tox/*
+    */site-packages/*
+    */conftest.py
+    # Scripts de exemplo/debug
+    */scripts/*
+    # Interfaces (difíceis de testar completamente)
+    # */interfaces/streamlit/*  # Comentado: vamos tentar testar
+
+# Dados paralelos (para testes concorrentes)
+parallel = False
+
+[report]
+# Precisão dos percentuais
+precision = 2
+
+# Mostrar linhas faltantes
+show_missing = True
+
+# Pular arquivos 100% cobertos
+skip_covered = False
+
+# Skip arquivos vazios
+skip_empty = True
+
+# Ordenação do relatório
+sort = Cover
+
+# Linhas a excluir da cobertura
+exclude_lines =
+    # Padrões comuns
+    pragma: no cover
+    def __repr__
+    def __str__
+
+    # Debugging
+    if self\.debug
+
+    # Proteções de tipo
+    if TYPE_CHECKING:
+    if typing\.TYPE_CHECKING:
+
+    # Métodos abstratos
+    raise AssertionError
+    raise NotImplementedError
+    @abstractmethod
+    @abc\.abstractmethod
+
+    # Bloco main
+    if __name__ == .__main__.:
+
+    # Defensive programming
+    except ImportError:
+    except ModuleNotFoundError:
+
+    # Pass statements
+    ^\s*\.\.\.\s*$
+    ^\s*pass\s*$
+
+[html]
+# Diretório para relatório HTML
+directory = htmlcov
+
+# Título do relatório
+title = AMLDO v0.3.0 - Relatório de Cobertura
+
+# Mostrar contexto
+show_contexts = True
+
+[xml]
+# Saída XML (para CI/CD)
+output = coverage.xml
+
+[json]
+# Saída JSON
+output = coverage.json
+pretty_print = True
+show_contexts = True

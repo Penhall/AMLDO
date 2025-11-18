@@ -46,10 +46,31 @@ pre-commit install
 
 ## Running the Application
 
-### Option 1: Google ADK Interface (Recommended for RAG queries)
+### 🚀 Quick Start - Use Shell Scripts (RECOMMENDED)
+
+The easiest way to run the applications is using the shell scripts in `scripts/`:
 
 ```bash
-# With venv activated
+# Run individual applications
+./scripts/run_api.sh         # FastAPI REST API (port 8000)
+./scripts/run_streamlit.sh   # Streamlit Web App (port 8501)
+./scripts/run_adk.sh         # Google ADK Interface (port 8080)
+
+# Or run ALL applications at once
+./scripts/run_all.sh         # All apps simultaneously with logs
+```
+
+**See `scripts/README.md` for detailed documentation.**
+
+---
+
+### Option 1: Google ADK Interface (Conversational RAG)
+
+```bash
+# Using script (recommended)
+./scripts/run_adk.sh
+
+# Or direct command
 adk web
 ```
 Then access http://localhost:8080 and select agent:
@@ -60,6 +81,10 @@ Then access http://localhost:8080 and select agent:
 ### Option 2: Streamlit Web Interface (Full pipeline)
 
 ```bash
+# Using script (recommended)
+./scripts/run_streamlit.sh
+
+# Or direct command
 streamlit run src/amldo/interfaces/streamlit/app.py
 ```
 Then access http://localhost:8501
@@ -69,10 +94,13 @@ Then access http://localhost:8501
 - **Pipeline**: Upload and process new documents
 - **RAG Query**: Query the knowledge base
 
-### Option 3: FastAPI REST API ✨ NEW (Recommended for integration)
+### Option 3: FastAPI REST API ✨ (Recommended for integration)
 
 ```bash
-# Start API server
+# Using script (recommended)
+./scripts/run_api.sh
+
+# Or direct command
 amldo-api
 
 # Or with custom settings
@@ -452,10 +480,16 @@ pip install -e ".[dev]"
 
 **Common Commands:**
 ```bash
-# Run interfaces
-adk web                          # Google ADK (port 8080)
-streamlit run src/amldo/interfaces/streamlit/app.py  # Streamlit (port 8501)
-amldo-api                        # FastAPI (port 8000) ✨ NEW
+# Run interfaces (RECOMMENDED: use shell scripts)
+./scripts/run_all.sh             # All apps at once ⭐
+./scripts/run_api.sh             # FastAPI (port 8000)
+./scripts/run_streamlit.sh       # Streamlit (port 8501)
+./scripts/run_adk.sh             # Google ADK (port 8080)
+
+# Or direct commands
+adk web                          # Google ADK
+streamlit run src/amldo/interfaces/streamlit/app.py  # Streamlit
+amldo-api                        # FastAPI
 
 # Process documents
 amldo-process --input file.pdf --output data/processed/
@@ -479,7 +513,9 @@ black src/ && ruff check src/ && mypy src/
 - `MIGRATION.md` - Migration guide
 
 **Documentation:**
-- Full docs in `docs/` directory
+- **Shell scripts:** `scripts/README.md` ⭐ NEW
+- **Instructions:** `.instructions/README.md` ⭐ NEW
+- Full technical docs in `docs/` directory
 - API usage in `docs/04-guia-desenvolvedor.md`
 - Migration guide in `MIGRATION.md`
 - This file (CLAUDE.md) for quick reference
