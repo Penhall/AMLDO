@@ -20,9 +20,13 @@ from amldo.pipeline.indexer.indexer import indexar_normas
 from amldo.pipeline.embeddings import get_embedding_function
 from amldo.core.config import settings
 from amldo.core.exceptions import IngestionError, StructureError, IndexingError
+from amldo.interfaces.streamlit.theme import apply_theme
 
 
-st.set_page_config(page_title="Pipeline - AMLDO", layout="wide")
+st.set_page_config(page_title="Pipeline - AMLDO", page_icon="🌿", layout="wide")
+
+# Aplicar tema Nature
+apply_theme()
 
 st.title("🔄 Pipeline de Processamento de Documentos")
 

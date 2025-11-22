@@ -12,8 +12,12 @@ from amldo.rag.v1.tools import consultar_base_rag as consultar_v1
 from amldo.rag.v2.tools import consultar_base_rag as consultar_v2
 from amldo.core.config import settings
 from amldo.core.exceptions import RAGError
+from amldo.interfaces.streamlit.theme import apply_theme
 
-st.set_page_config(page_title="RAG Query - AMLDO", layout="wide")
+st.set_page_config(page_title="RAG Query - AMLDO", page_icon="🌿", layout="wide")
+
+# Aplicar tema Nature
+apply_theme()
 
 st.title("🔍 Consultas RAG")
 

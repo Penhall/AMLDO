@@ -1,108 +1,150 @@
-# ============================================================================
-# Docker Compose - AMLDO v0.3.0
-# ============================================================================
+# =============================================================================
+# AMLDO - Docker Compose
+# Sistema RAG para Legislação de Licitações
+# Versão: 0.3.0
+# =============================================================================
+#
 # Uso:
-#   docker-compose up          # Iniciar todos os serviços
-#   docker-compose up api      # Apenas API
-#   docker-compose down        # Parar tudo
-#   docker-compose logs -f     # Ver logs
-# ============================================================================
-
-version: '3.8'
+#   docker-compose up -d              # Inicia todos os serviços
+#   docker-compose up fastapi         # Apenas FastAPI
+#   docker-compose up streamlit       # Apenas Streamlit
+#   docker-compose up adk             # Apenas ADK
+#   docker-compose logs -f            # Ver logs
+#   docker-compose down               # Parar todos
+#
+# =============================================================================
 
 services:
-  # --------------------------------------------------------------------------
-  # FastAPI - REST API Principal
-  # --------------------------------------------------------------------------
-  api:
+  # ---------------------------------------------------------------------------
+  # FastAPI REST API - Tema NextChat (Dark/Azul)
+  # Porta: 8000
+  # ---------------------------------------------------------------------------
+  fastapi:
     build:
       context: .
-      dockerfile: Dockerfile
-    image: amldo:latest
-    container_name: amldo-api
-    restart: unless-stopped
+      target: fastapi
+    image: amldo-api:latest
+    container_name: amldo-fastapi
     ports:
       - "${API_PORT:-8000}:8000"
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - API_HOST=0.0.0.0
       - API_PORT=8000
-      - VECTOR_DB_PATH=/data/vector_db
-      - METRICS_DB_PATH=/data/metrics/metrics.db
+      - VECTOR_DB_PATH=/app/data/vector_db
+      - METRICS_DB_PATH=/app/data/metrics/metrics.db
     volumes:
-      - ./data:/data
-      - ./logs:/app/logs
-      - vector_db:/data/vector_db
-      - metrics_db:/data/metrics
-    networks:
-      - amldo-network
+      - ./data:/app/data:ro
+      - amldo-logs:/app/logs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
-    command: amldo-api
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - amldo-network
 
-  # --------------------------------------------------------------------------
-  # Streamlit - Interface Web
-  # --------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
+  # Streamlit Web App - Tema Chat ONN (Light/Roxo)
+  # Porta: 8501
+  # ---------------------------------------------------------------------------
   streamlit:
     build:
       context: .
-      dockerfile: Dockerfile
-    image: amldo:latest
+      target: streamlit
+    image: amldo-streamlit:latest
     container_name: amldo-streamlit
-    restart: unless-stopped
     ports:
       - "${STREAMLIT_PORT:-8501}:8501"
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - VECTOR_DB_PATH=/data/vector_db
+      - VECTOR_DB_PATH=/app/data/vector_db
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
     volumes:
-      - ./data:/data
-      - ./logs:/app/logs
-      - vector_db:/data/vector_db
+      - ./data:/app/data:ro
+      - amldo-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
     networks:
       - amldo-network
-    depends_on:
-      - api
-    command: streamlit run src/amldo/interfaces/streamlit/app.py --server.port=8501 --server.address=0.0.0.0
 
-  # --------------------------------------------------------------------------
-  # Google ADK Agent
-  # --------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
+  # Google ADK Interface - Tema MedCare (Dark/Navy)
+  # Porta: 8080
+  # NOTA: Tempo de inicialização longo (30-60s) devido aos pacotes Google Cloud
+  # ---------------------------------------------------------------------------
   adk:
     build:
       context: .
-      dockerfile: Dockerfile
-    image: amldo:latest
+      target: adk
+    image: amldo-adk:latest
     container_name: amldo-adk
-    restart: unless-stopped
     ports:
       - "${ADK_PORT:-8080}:8080"
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - VECTOR_DB_PATH=/data/vector_db
+      - VECTOR_DB_PATH=/app/data/vector_db
     volumes:
-      - ./data:/data
-      - ./logs:/app/logs
-      - vector_db:/data/vector_db
+      - ./data:/app/data:ro
+      - ./rag_v1:/app/rag_v1:ro
+      - ./rag_v2:/app/rag_v2:ro
+      - ./rag_v3:/app/rag_v3:ro
+      - amldo-logs:/app/logs
+    # ADK não tem endpoint de health padrão, usa start_period maior
+    restart: unless-stopped
     networks:
       - amldo-network
-    depends_on:
-      - api
-    command: adk web
 
-  # --------------------------------------------------------------------------
-  # Nginx - Reverse Proxy (opcional)
-  # --------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
+  # Desenvolvimento - Todas as interfaces (use com cuidado)
+  # Portas: 8000, 8501, 8080
+  # ---------------------------------------------------------------------------
+  dev:
+    build:
+      context: .
+      target: dev
+    image: amldo-dev:latest
+    container_name: amldo-dev
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+      - "8080:8080"
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - ENVIRONMENT=development
+      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
+      - VECTOR_DB_PATH=/app/data/vector_db
+    volumes:
+      - .:/app
+      - /app/venv  # Ignora venv local
+      - /app/.git  # Ignora .git
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    networks:
+      - amldo-network
+    profiles:
+      - dev  # Só inicia com --profile dev
+
+  # ---------------------------------------------------------------------------
+  # Nginx - Reverse Proxy (produção)
+  # ---------------------------------------------------------------------------
   nginx:
     image: nginx:alpine
     container_name: amldo-nginx
@@ -116,54 +158,85 @@ services:
     networks:
       - amldo-network
     depends_on:
-      - api
+      - fastapi
       - streamlit
     profiles:
       - production  # Apenas em produção
 
-# ----------------------------------------------------------------------------
-# Volumes Persistentes
-# ----------------------------------------------------------------------------
+# =============================================================================
+# Volumes
+# =============================================================================
 volumes:
-  vector_db:
+  amldo-logs:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/vector_db
 
-  metrics_db:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/metrics
-
-# ----------------------------------------------------------------------------
+# =============================================================================
 # Networks
-# ----------------------------------------------------------------------------
+# =============================================================================
 networks:
   amldo-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
 
-# ----------------------------------------------------------------------------
-# Uso Avançado
-# ----------------------------------------------------------------------------
-# 1. Development:
-#    docker-compose up api streamlit
+# =============================================================================
+# Instruções de Uso
+# =============================================================================
 #
-# 2. Production (com nginx):
+# 1. CONFIGURAÇÃO INICIAL:
+#    Certifique-se de que o arquivo .env existe com GOOGLE_API_KEY
+#
+#    cp .env.example .env
+#    # Edite .env e adicione sua chave
+#
+# 2. BUILD DAS IMAGENS:
+#    docker-compose build
+#
+#    # Ou build específico:
+#    docker-compose build fastapi
+#    docker-compose build streamlit
+#    docker-compose build adk
+#
+# 3. EXECUTAR SERVIÇOS:
+#    # Todos os serviços principais:
+#    docker-compose up -d
+#
+#    # Apenas um serviço:
+#    docker-compose up -d fastapi
+#    docker-compose up -d streamlit
+#    docker-compose up -d adk
+#
+#    # Ambiente de desenvolvimento:
+#    docker-compose --profile dev up -d dev
+#
+#    # Com nginx (produção):
 #    docker-compose --profile production up -d
 #
-# 3. Rebuild:
+# 4. MONITORAMENTO:
+#    docker-compose logs -f           # Todos os logs
+#    docker-compose logs -f fastapi   # Logs específicos
+#    docker-compose ps                # Status dos containers
+#
+# 5. PARAR SERVIÇOS:
+#    docker-compose down              # Para todos
+#    docker-compose down -v           # Para e remove volumes
+#
+# 6. ACESSAR SHELL:
+#    docker-compose exec fastapi bash
+#    docker-compose exec streamlit bash
+#
+# 7. REBUILD (após mudanças):
 #    docker-compose build --no-cache
+#    docker-compose up -d --force-recreate
 #
-# 4. Logs:
-#    docker-compose logs -f api
+# =============================================================================
+# URLs de Acesso
+# =============================================================================
 #
-# 5. Shell:
-#    docker-compose exec api bash
-# ----------------------------------------------------------------------------
+# FastAPI:   http://localhost:8000
+#            http://localhost:8000/docs    (Swagger)
+#            http://localhost:8000/consulta (Chat)
+#
+# Streamlit: http://localhost:8501
+#
+# ADK:       http://localhost:8080
+#
+# =============================================================================

@@ -2,59 +2,226 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>AMLDO • Processamento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AMLDO API | Processamento</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    :root { --brand:#0a2a66; }
-    body { background: #f6f7fb; }
-    .navbar { background: var(--brand); }
-    .navbar-brand { color: #fff; font-weight: 600; }
-    .page { max-width: 960px; margin: 24px auto; }
-  </style>
+  <link rel="stylesheet" href="/static/css/style.css" />
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container"><a class="navbar-brand" href="/">AMLDO</a></div>
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand" href="/">AMLDO API</a>
+      <div class="d-flex gap-2">
+        <a href="/" class="btn btn-outline-secondary btn-sm">Home</a>
+        <a href="/consulta" class="btn btn-outline-info btn-sm">Consulta RAG</a>
+      </div>
+    </div>
   </nav>
+
   <div class="page container">
+    <!-- Upload Card -->
     <div class="card mb-3">
       <div class="card-body">
-        <h5>Processamento de Documentos</h5>
-        <input type="file" id="files" multiple accept=".pdf" class="form-control mb-2" />
-        <button id="upload" class="btn btn-primary">Upload</button>
-        <button id="process" class="btn btn-success">Processar</button>
-        <div id="result" class="mt-3"></div>
+        <h5>Upload de Documentos</h5>
+        <p style="color: var(--text-secondary);">
+          Envie arquivos PDF para processamento e indexação na base de conhecimento.
+        </p>
+
+        <div class="upload-area" id="uploadArea" style="
+          border: 2px dashed var(--border-color);
+          border-radius: 12px;
+          padding: 2rem;
+          text-align: center;
+          cursor: pointer;
+          transition: var(--transition);
+          margin-bottom: 1rem;
+        ">
+          <input type="file" id="files" multiple accept=".pdf" style="display: none;" />
+          <div style="color: var(--text-muted);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16" style="margin-bottom: 1rem; opacity: 0.5;">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+              <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+            </svg>
+            <p style="margin: 0;">Clique ou arraste arquivos PDF aqui</p>
+            <small>Máximo: 10 arquivos por vez</small>
+          </div>
+        </div>
+
+        <div id="fileList" style="margin-bottom: 1rem;"></div>
+
+        <div class="d-flex gap-2">
+          <button id="upload" class="btn btn-primary" disabled>
+            Upload
+          </button>
+          <button id="process" class="btn btn-success" disabled>
+            Processar Documentos
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Card -->
+    <div class="card">
+      <div class="card-body">
+        <h5>Resultado</h5>
+        <div id="result">
+          <p style="color: var(--text-muted);">Nenhuma operação realizada ainda.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="card mt-3">
+      <div class="card-body" style="padding: 1rem;">
+        <h6 style="color: var(--text-primary); margin-bottom: 0.75rem;">Pipeline de Processamento</h6>
+        <div class="row">
+          <div class="col-md-4">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="background: var(--accent-gradient); color: var(--bg-primary); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">1</span>
+              <small style="color: var(--text-secondary);">Upload PDF</small>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="background: var(--accent-gradient); color: var(--bg-primary); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">2</span>
+              <small style="color: var(--text-secondary);">Extração de texto</small>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="background: var(--accent-gradient); color: var(--bg-primary); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">3</span>
+              <small style="color: var(--text-secondary);">Indexação FAISS</small>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
   <script>
+    const uploadArea = document.getElementById('uploadArea');
+    const filesInput = document.getElementById('files');
+    const fileList = document.getElementById('fileList');
+    const uploadBtn = document.getElementById('upload');
+    const processBtn = document.getElementById('process');
     const result = document.getElementById('result');
-    
-    document.getElementById('upload').onclick = async () => {
-      const files = document.getElementById('files').files;
-      if (!files.length) { alert('Selecione arquivos'); return; }
-      
+
+    // Drag and drop
+    uploadArea.onclick = () => filesInput.click();
+
+    uploadArea.ondragover = (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = 'var(--accent-primary)';
+      uploadArea.style.background = 'rgba(0, 212, 255, 0.05)';
+    };
+
+    uploadArea.ondragleave = () => {
+      uploadArea.style.borderColor = 'var(--border-color)';
+      uploadArea.style.background = 'transparent';
+    };
+
+    uploadArea.ondrop = (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = 'var(--border-color)';
+      uploadArea.style.background = 'transparent';
+      filesInput.files = e.dataTransfer.files;
+      updateFileList();
+    };
+
+    filesInput.onchange = updateFileList;
+
+    function updateFileList() {
+      const files = filesInput.files;
+      if (files.length === 0) {
+        fileList.innerHTML = '';
+        uploadBtn.disabled = true;
+        return;
+      }
+
+      let html = '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">';
+      for (let f of files) {
+        html += `
+          <span style="
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+          ">
+            ${f.name}
+            <small style="color: var(--text-muted);">(${(f.size / 1024).toFixed(1)} KB)</small>
+          </span>
+        `;
+      }
+      html += '</div>';
+      fileList.innerHTML = html;
+      uploadBtn.disabled = false;
+    }
+
+    uploadBtn.onclick = async () => {
+      const files = filesInput.files;
+      if (!files.length) return;
+
+      uploadBtn.disabled = true;
+      uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Enviando...';
+
       const formData = new FormData();
       for (let f of files) formData.append('files', f);
-      
+
       try {
         const res = await fetch('/api/upload', {method: 'POST', body: formData});
         const data = await res.json();
-        result.innerHTML = `<div class="alert alert-success">Salvos: ${data.saved.join(', ')}</div>`;
+        result.innerHTML = `
+          <div class="alert alert-success">
+            <strong>Upload concluído!</strong><br>
+            Arquivos salvos: ${data.saved.join(', ')}
+          </div>
+        `;
+        processBtn.disabled = false;
       } catch(e) {
-        result.innerHTML = `<div class="alert alert-danger">Erro: ${e.message}</div>`;
+        result.innerHTML = `
+          <div class="alert alert-danger">
+            <strong>Erro no upload:</strong> ${e.message}
+          </div>
+        `;
       }
+
+      uploadBtn.disabled = false;
+      uploadBtn.innerHTML = 'Upload';
     };
-    
-    document.getElementById('process').onclick = async () => {
-      result.innerHTML = '<div class="alert alert-info">Processando...</div>';
+
+    processBtn.onclick = async () => {
+      processBtn.disabled = true;
+      processBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...';
+
+      result.innerHTML = `
+        <div class="alert alert-info">
+          <strong>Processando...</strong><br>
+          Extraindo texto e gerando embeddings. Isso pode levar alguns minutos.
+        </div>
+      `;
+
       try {
         const res = await fetch('/api/process', {method: 'POST'});
         const data = await res.json();
-        result.innerHTML = `<div class="alert alert-success">Processados: ${data.processed}, Chunks: ${data.total_chunks}</div>`;
+        result.innerHTML = `
+          <div class="alert alert-success">
+            <strong>Processamento concluído!</strong><br>
+            Documentos processados: ${data.processed}<br>
+            Total de chunks: ${data.total_chunks}
+          </div>
+        `;
       } catch(e) {
-        result.innerHTML = `<div class="alert alert-danger">Erro: ${e.message}</div>`;
+        result.innerHTML = `
+          <div class="alert alert-danger">
+            <strong>Erro no processamento:</strong> ${e.message}
+          </div>
+        `;
       }
+
+      processBtn.disabled = false;
+      processBtn.innerHTML = 'Processar Documentos';
     };
   </script>
 </body>

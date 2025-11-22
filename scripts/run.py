@@ -11,10 +11,12 @@ Uso:
     python scripts/run.py --adk     # Google ADK diretamente
     python scripts/run.py --all     # Todas as aplicações
     python scripts/run.py --kill    # Matar processos nas portas (8000, 8501, 8080)
+    python scripts/run.py --docker  # Executar com Docker Compose
 
 Notas:
     - Ao iniciar uma aplicação, processos ocupando a porta serão encerrados automaticamente
     - Use --kill para liberar as portas manualmente sem iniciar nenhuma aplicação
+    - Use --docker para ver opções de execução com Docker Compose
 """
 
 import os
@@ -433,6 +435,12 @@ def run_adk():
         print(f"{Colors.YELLOW}⚠️  Aviso: GOOGLE_API_KEY não configurado no .env{Colors.NC}")
         print()
 
+    # Aviso sobre tempo de carregamento
+    print(f"{Colors.YELLOW}⏳ ATENÇÃO: O ADK pode levar 30-60 segundos para carregar.{Colors.NC}")
+    print(f"{Colors.YELLOW}   Isso é normal devido aos pacotes Google Cloud/VertexAI.{Colors.NC}")
+    print(f"{Colors.YELLOW}   Aguarde até ver 'Running on http://...' antes de acessar.{Colors.NC}")
+    print()
+
     print(f"{Colors.GREEN}📊 Interface disponível em:{Colors.NC}")
     print(f"   http://localhost:8080")
     print()
@@ -443,7 +451,9 @@ def run_adk():
     print()
     print(f"{Colors.CYAN}────────────────────────────────────────────────────────────{Colors.NC}")
     print(f"{Colors.GREEN}Pressione Ctrl+C para parar o servidor{Colors.NC}")
-    print(f"{Colors.CYAN}════════════════════════════════════════════════════════════{Colors.NC}\n")
+    print(f"{Colors.CYAN}════════════════════════════════════════════════════════════{Colors.NC}")
+    print()
+    print(f"{Colors.YELLOW}🔄 Carregando pacotes Google ADK (aguarde)...{Colors.NC}\n")
 
     # Executar adk web na porta 8080 (evitar conflito com FastAPI na 8000)
     try:
@@ -477,6 +487,114 @@ def kill_all_apps():
     else:
         failed = in_use_count - killed_count
         print(f"{Colors.YELLOW}⚠️  {killed_count}/{in_use_count} processos encerrados ({failed} falharam){Colors.NC}")
+
+
+def check_docker() -> bool:
+    """Verifica se Docker e Docker Compose estão disponíveis."""
+    try:
+        subprocess.run(["docker", "--version"], capture_output=True, check=True)
+        subprocess.run(["docker", "compose", "version"], capture_output=True, check=True)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+def run_docker():
+    """Executa aplicações via Docker Compose."""
+    print(f"{Colors.BLUE}🐳 Docker Compose - AMLDO{Colors.NC}\n")
+
+    # Verificar Docker
+    if not check_docker():
+        print(f"{Colors.RED}❌ Docker ou Docker Compose não encontrado{Colors.NC}")
+        print(f"   Instale Docker Desktop: https://www.docker.com/products/docker-desktop")
+        sys.exit(1)
+
+    # Verificar .env
+    if not Path(".env").exists():
+        print(f"{Colors.YELLOW}⚠️  Arquivo .env não encontrado{Colors.NC}")
+        print(f"   Crie um baseado em .env.example com GOOGLE_API_KEY")
+        print()
+
+    # Verificar docker-compose.yml
+    if not Path("docker-compose.yml").exists():
+        print(f"{Colors.RED}❌ Arquivo docker-compose.yml não encontrado{Colors.NC}")
+        sys.exit(1)
+
+    print(f"{Colors.GREEN}Escolha uma opção:{Colors.NC}\n")
+    print(f"  {Colors.BOLD}1{Colors.NC} - Build das imagens")
+    print(f"  {Colors.BOLD}2{Colors.NC} - Iniciar todos os serviços")
+    print(f"  {Colors.BOLD}3{Colors.NC} - Iniciar apenas FastAPI")
+    print(f"  {Colors.BOLD}4{Colors.NC} - Iniciar apenas Streamlit")
+    print(f"  {Colors.BOLD}5{Colors.NC} - Iniciar apenas ADK")
+    print(f"  {Colors.BOLD}6{Colors.NC} - Ver logs")
+    print(f"  {Colors.BOLD}7{Colors.NC} - Parar todos os serviços")
+    print(f"  {Colors.BOLD}8{Colors.NC} - Status dos containers")
+    print(f"  {Colors.BOLD}0{Colors.NC} - Voltar")
+    print()
+
+    while True:
+        try:
+            choice = input(f"{Colors.CYAN}Digite sua escolha [0-8]: {Colors.NC}").strip()
+            if choice not in ["0", "1", "2", "3", "4", "5", "6", "7", "8"]:
+                print(f"{Colors.RED}Opção inválida.{Colors.NC}")
+                continue
+
+            if choice == "0":
+                return
+
+            elif choice == "1":
+                print(f"\n{Colors.BLUE}🔨 Construindo imagens Docker...{Colors.NC}\n")
+                subprocess.run(["docker", "compose", "build"], check=True)
+                print(f"\n{Colors.GREEN}✅ Build concluído!{Colors.NC}")
+
+            elif choice == "2":
+                print(f"\n{Colors.BLUE}🚀 Iniciando todos os serviços...{Colors.NC}\n")
+                subprocess.run(["docker", "compose", "up", "-d", "fastapi", "streamlit", "adk"], check=True)
+                print(f"\n{Colors.GREEN}✅ Serviços iniciados!{Colors.NC}")
+                print(f"\n{Colors.GREEN}📊 URLs de acesso:{Colors.NC}")
+                print(f"   FastAPI:   http://localhost:8000")
+                print(f"   Streamlit: http://localhost:8501")
+                print(f"   ADK:       http://localhost:8080")
+
+            elif choice == "3":
+                print(f"\n{Colors.BLUE}🚀 Iniciando FastAPI...{Colors.NC}\n")
+                subprocess.run(["docker", "compose", "up", "-d", "fastapi"], check=True)
+                print(f"\n{Colors.GREEN}✅ FastAPI iniciada em http://localhost:8000{Colors.NC}")
+
+            elif choice == "4":
+                print(f"\n{Colors.BLUE}🚀 Iniciando Streamlit...{Colors.NC}\n")
+                subprocess.run(["docker", "compose", "up", "-d", "streamlit"], check=True)
+                print(f"\n{Colors.GREEN}✅ Streamlit iniciado em http://localhost:8501{Colors.NC}")
+
+            elif choice == "5":
+                print(f"\n{Colors.BLUE}🚀 Iniciando ADK...{Colors.NC}\n")
+                print(f"{Colors.YELLOW}⏳ ADK pode levar 30-60s para inicializar{Colors.NC}")
+                subprocess.run(["docker", "compose", "up", "-d", "adk"], check=True)
+                print(f"\n{Colors.GREEN}✅ ADK iniciado em http://localhost:8080{Colors.NC}")
+
+            elif choice == "6":
+                print(f"\n{Colors.BLUE}📋 Exibindo logs (Ctrl+C para sair)...{Colors.NC}\n")
+                try:
+                    subprocess.run(["docker", "compose", "logs", "-f"])
+                except KeyboardInterrupt:
+                    print()
+
+            elif choice == "7":
+                print(f"\n{Colors.YELLOW}🛑 Parando todos os serviços...{Colors.NC}\n")
+                subprocess.run(["docker", "compose", "down"], check=True)
+                print(f"\n{Colors.GREEN}✅ Serviços parados!{Colors.NC}")
+
+            elif choice == "8":
+                print(f"\n{Colors.BLUE}📊 Status dos containers:{Colors.NC}\n")
+                subprocess.run(["docker", "compose", "ps"])
+
+            print()
+
+        except subprocess.CalledProcessError as e:
+            print(f"{Colors.RED}❌ Erro ao executar comando Docker: {e}{Colors.NC}")
+        except KeyboardInterrupt:
+            print(f"\n{Colors.YELLOW}Operação cancelada{Colors.NC}")
+            return
 
 
 def run_all():
@@ -527,6 +645,7 @@ def run_all():
 
     # 3. Iniciar Google ADK
     print(f"{Colors.BLUE}[3/3]{Colors.NC} Iniciando Google ADK Interface...")
+    print(f"{Colors.YELLOW}      ⏳ ADK pode levar 30-60s para carregar (normal){Colors.NC}")
     adk_log = open(logs_dir / "adk.log", "w")
     try:
         adk_proc = subprocess.Popen(
@@ -536,6 +655,7 @@ def run_all():
         )
         processes.append(adk_proc)
         print(f"{Colors.GREEN}      ✅ Google ADK iniciado (PID: {adk_proc.pid}){Colors.NC}")
+        print(f"{Colors.YELLOW}      📋 Acompanhe: tail -f logs/adk.log{Colors.NC}")
     except FileNotFoundError:
         print(f"{Colors.YELLOW}      ⚠️  Google ADK não disponível (adk não instalado){Colors.NC}")
     time.sleep(2)
@@ -590,16 +710,17 @@ def show_menu():
     print(f"  {Colors.BOLD}3{Colors.NC} - Google ADK Interface (porta 8080)")
     print(f"  {Colors.BOLD}4{Colors.NC} - Todas as aplicações (8000, 8501, 8080)")
     print(f"  {Colors.BOLD}5{Colors.NC} - {Colors.YELLOW}Matar processos nas portas{Colors.NC} (8000, 8501, 8080)")
+    print(f"  {Colors.BOLD}6{Colors.NC} - {Colors.BLUE}Docker Compose{Colors.NC} (build, iniciar, parar)")
     print(f"  {Colors.BOLD}0{Colors.NC} - Sair")
     print()
 
     while True:
         try:
-            choice = input(f"{Colors.CYAN}Digite sua escolha [1-5, 0 para sair]: {Colors.NC}").strip()
-            if choice in ["0", "1", "2", "3", "4", "5"]:
+            choice = input(f"{Colors.CYAN}Digite sua escolha [0-6]: {Colors.NC}").strip()
+            if choice in ["0", "1", "2", "3", "4", "5", "6"]:
                 return choice
             else:
-                print(f"{Colors.RED}Opção inválida. Digite um número de 0 a 5.{Colors.NC}")
+                print(f"{Colors.RED}Opção inválida. Digite um número de 0 a 6.{Colors.NC}")
         except (KeyboardInterrupt, EOFError):
             print(f"\n{Colors.YELLOW}Operação cancelada{Colors.NC}")
             sys.exit(0)
@@ -612,9 +733,13 @@ def main():
     if len(sys.argv) > 1:
         arg = sys.argv[1].lower()
 
-        # --kill não precisa verificar pré-requisitos
+        # --kill e --docker não precisam verificar pré-requisitos Python
         if arg in ["--kill", "-K"]:
             kill_all_apps()
+            return
+
+        if arg in ["--docker", "-d"]:
+            run_docker()
             return
 
         # Verificar pré-requisitos
@@ -662,6 +787,9 @@ def main():
         run_all()
     elif choice == "5":
         kill_all_apps()
+    elif choice == "6":
+        run_docker()
+
 
 if __name__ == "__main__":
     main()

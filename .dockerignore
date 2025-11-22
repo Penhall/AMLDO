@@ -1,12 +1,14 @@
-# ============================================================================
+# =============================================================================
 # .dockerignore - Arquivos a excluir do build Docker
-# ============================================================================
+# AMLDO v0.3.0
+# =============================================================================
 
 # Git
 .git/
 .gitignore
 .gitattributes
 .github/
+.gitmodules
 
 # Python
 __pycache__/
@@ -93,9 +95,18 @@ Dockerfile
 docker-compose.yml
 .dockerignore
 
+# Claude/AI
+.claude/
+CLAUDE.md
+.instructions/
+
 # Others
 .env
 .env.*
 !.env.example
 *.bak
 *.orig
+MIGRATION.md
+
+# Submodules antigos
+AMLDO_W/

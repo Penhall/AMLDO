@@ -1,10 +1,530 @@
-/* Estilos básicos AMLDO API */
+/* =============================================================================
+   AMLDO FastAPI - Tema NextChat (Dark Blue/Cyan)
+   Inspirado em: NextChat UI
+   Identidade: Escuro, moderno, profissional para desenvolvedores
+   ============================================================================= */
+
 :root {
-  --brand: #0a2a66;
-  --accent: #1f5eff;
-  --bg: #f6f7fb;
+  /* Cores principais - NextChat Dark */
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16162a;
+  --bg-sidebar: #0d0d1a;
+  --bg-card: #232340;
+  --bg-input: #2a2a4a;
+  --bg-hover: #2d2d50;
+
+  /* Acentos - Azul/Ciano */
+  --accent-primary: #5b8def;
+  --accent-secondary: #4a7de0;
+  --accent-green: #10b981;
+  --accent-gradient: linear-gradient(135deg, #5b8def 0%, #4a7de0 100%);
+
+  /* Texto */
+  --text-primary: #e4e4e7;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --text-bright: #ffffff;
+
+  /* Status */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #5b8def;
+
+  /* Bordas e sombras */
+  --border-color: #3f3f5a;
+  --border-light: #52526e;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 8px 32px rgba(91, 141, 239, 0.15);
+
+  /* Efeitos */
+  --transition: all 0.2s ease;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+/* Reset e Base */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
 }
+
+/* Layout Principal - Estilo NextChat */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Navbar Superior */
+.navbar {
+  background: var(--bg-sidebar) !important;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-brand {
+  color: var(--accent-primary) !important;
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navbar-brand::before {
+  content: '';
+  width: 32px;
+  height: 32px;
+  background: var(--accent-gradient);
+  border-radius: 8px;
+  display: inline-block;
+}
+
+/* Container da página */
+.page {
+  max-width: 1100px;
+  margin: 1.5rem auto;
+  padding: 0 1.5rem;
+}
+
+/* Cards - Estilo NextChat */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  overflow: hidden;
+}
+
+.card:hover {
+  border-color: var(--border-light);
+  box-shadow: var(--shadow-hover);
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+.card h5, .card-body h5 {
+  color: var(--text-bright);
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Sidebar de Conversas - Estilo NextChat */
+.sidebar {
+  width: 280px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-item {
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.25rem;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid transparent;
+}
+
+.sidebar-item:hover {
+  background: var(--bg-hover);
+}
+
+.sidebar-item.active {
+  background: var(--bg-card);
+  border-color: var(--accent-primary);
+}
+
+/* Botões - Estilo NextChat */
+.btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: var(--transition);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary, .btn-brand {
+  background: var(--accent-gradient);
+  color: var(--text-bright);
+}
+
+.btn-primary:hover, .btn-brand:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  color: var(--text-bright);
+}
+
+.btn-success {
+  background: var(--success);
+  color: var(--text-bright);
+}
+
+.btn-success:hover {
+  opacity: 0.9;
+}
+
+.btn-outline-secondary {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-outline-secondary:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+.btn-outline-info {
+  background: transparent;
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.btn-outline-info:hover {
+  background: rgba(91, 141, 239, 0.1);
+}
+
+/* Send Button - Estilo NextChat */
+.btn-send {
+  background: var(--accent-gradient);
+  color: white;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Inputs - Estilo NextChat */
+.form-control, .form-select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+.form-control:focus, .form-select:focus {
+  background: var(--bg-input);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.15);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.form-control::placeholder {
+  color: var(--text-muted);
+}
+
+.form-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* Input Group */
+.input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.input-group .form-control {
+  flex: 1;
+}
+
+/* Chat Container - Estilo NextChat */
+#chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+  min-height: 300px;
+  max-height: 450px;
+}
+
+/* Mensagens - Estilo NextChat */
+.msg {
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  max-width: 85%;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg.user {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
+
+.msg.assistant {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  margin-right: auto;
+  border-bottom-left-radius: 4px;
+}
+
+.msg strong {
+  color: var(--accent-primary);
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.msg.user strong {
+  color: var(--success);
+  text-align: right;
+}
+
+/* Code blocks - Estilo NextChat */
+.msg code, code {
+  background: var(--bg-sidebar);
+  color: var(--accent-primary);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'Monaco', monospace;
+  font-size: 0.85rem;
+}
+
+pre {
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+
+pre code {
+  background: transparent;
+  padding: 0;
+}
+
+/* Alerts - Estilo NextChat */
+.alert {
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  border: none;
+  border-left: 4px solid;
+}
+
+.alert-success {
+  background: rgba(16, 185, 129, 0.1);
+  border-left-color: var(--success);
+  color: var(--success);
+}
+
+.alert-danger {
+  background: rgba(239, 68, 68, 0.1);
+  border-left-color: var(--error);
+  color: var(--error);
+}
+
+.alert-info {
+  background: rgba(91, 141, 239, 0.1);
+  border-left-color: var(--info);
+  color: var(--info);
+}
+
+.alert-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-left-color: var(--warning);
+  color: var(--warning);
+}
+
+/* Upload Area - Estilo NextChat */
+.upload-area {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius);
+  padding: 2.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  background: var(--bg-secondary);
+}
+
+.upload-area:hover {
+  border-color: var(--accent-primary);
+  background: rgba(91, 141, 239, 0.05);
+}
+
+.upload-area svg {
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+/* Lista de Endpoints */
+.endpoint-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.endpoint-list li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.endpoint-list li:last-child {
+  border-bottom: none;
+}
+
+.method-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  min-width: 50px;
+  text-align: center;
+}
+
+.method-badge.get {
+  background: rgba(91, 141, 239, 0.2);
+  color: var(--info);
+}
+
+.method-badge.post {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success);
+}
+
+/* Badges */
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-primary {
+  background: var(--accent-gradient);
+  color: var(--text-bright);
+}
+
+/* Scrollbar - Estilo NextChat */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-light);
+}
+
+/* Links */
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+a:hover {
+  color: var(--accent-secondary);
+  text-decoration: underline;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: 2rem;
+}
+
+/* Spinner */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .page {
+    margin: 1rem auto;
+    padding: 0 1rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .msg {
+    max-width: 95%;
+  }
+
+  #chat {
+    max-height: 350px;
+  }
+}
+
+/* Utilitários */
+.text-muted { color: var(--text-muted) !important; }
+.text-primary { color: var(--accent-primary) !important; }
+.text-success { color: var(--success) !important; }
+.mb-2 { margin-bottom: 0.5rem !important; }
+.mb-3 { margin-bottom: 1rem !important; }
+.mt-3 { margin-top: 1rem !important; }
+.mt-4 { margin-top: 1.5rem !important; }
+.gap-2 { gap: 0.5rem !important; }
+.d-flex { display: flex !important; }
+.flex-wrap { flex-wrap: wrap !important; }
+.align-items-center { align-items: center !important; }
+.justify-content-between { justify-content: space-between !important; }
