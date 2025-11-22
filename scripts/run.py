@@ -10,6 +10,11 @@ Uso:
     python scripts/run.py --streamlit  # Streamlit diretamente
     python scripts/run.py --adk     # Google ADK diretamente
     python scripts/run.py --all     # Todas as aplicações
+    python scripts/run.py --kill    # Matar processos nas portas (8000, 8501, 8080)
+
+Notas:
+    - Ao iniciar uma aplicação, processos ocupando a porta serão encerrados automaticamente
+    - Use --kill para liberar as portas manualmente sem iniciar nenhuma aplicação
 """
 
 import os
@@ -18,8 +23,10 @@ import subprocess
 import platform
 import signal
 import time
+import socket
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
+from dotenv import load_dotenv
 
 # Cores ANSI para output colorido (funciona em Windows 10+ e Unix)
 if platform.system() == "Windows":
@@ -37,6 +44,195 @@ class Colors:
 
 # Lista de processos iniciados (para cleanup)
 processes: List[subprocess.Popen] = []
+
+# Portas usadas pelas aplicações
+PORTS = {
+    "api": 8000,
+    "streamlit": 8501,
+    "adk": 8080
+}
+
+
+def is_port_in_use(port: int) -> bool:
+    """
+    Verifica se uma porta está em uso.
+
+    Args:
+        port: Número da porta a verificar
+
+    Returns:
+        True se a porta está em uso, False caso contrário
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+
+
+def get_pid_on_port(port: int) -> Optional[int]:
+    """
+    Obtém o PID do processo usando uma porta específica.
+
+    Args:
+        port: Número da porta
+
+    Returns:
+        PID do processo ou None se não encontrado
+    """
+    system = platform.system()
+
+    try:
+        if system == "Windows":
+            # Windows: netstat -ano | findstr :PORT
+            result = subprocess.run(
+                f'netstat -ano | findstr :{port}',
+                shell=True, capture_output=True, text=True
+            )
+            for line in result.stdout.strip().split('\n'):
+                if f':{port}' in line and 'LISTENING' in line:
+                    parts = line.split()
+                    if parts:
+                        return int(parts[-1])
+        else:
+            # Linux/Mac: lsof -ti :PORT ou ss -tlnp
+            # Tentar lsof primeiro (mais comum)
+            result = subprocess.run(
+                ['lsof', '-ti', f':{port}'],
+                capture_output=True, text=True
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                # Pode retornar múltiplos PIDs, pegar o primeiro
+                return int(result.stdout.strip().split('\n')[0])
+
+            # Fallback para ss (Linux)
+            result = subprocess.run(
+                ['ss', '-tlnp', f'sport = :{port}'],
+                capture_output=True, text=True
+            )
+            if result.returncode == 0:
+                # Extrair PID do output do ss
+                import re
+                match = re.search(r'pid=(\d+)', result.stdout)
+                if match:
+                    return int(match.group(1))
+    except Exception:
+        pass
+
+    return None
+
+
+def kill_process_on_port(port: int, force: bool = False) -> bool:
+    """
+    Mata o processo usando uma porta específica.
+
+    Args:
+        port: Número da porta
+        force: Se True, usa SIGKILL (força encerramento imediato)
+
+    Returns:
+        True se conseguiu matar o processo, False caso contrário
+    """
+    pid = get_pid_on_port(port)
+    if pid is None:
+        return False
+
+    system = platform.system()
+
+    try:
+        if system == "Windows":
+            # Windows: taskkill
+            cmd = ['taskkill', '/F', '/PID', str(pid)] if force else ['taskkill', '/PID', str(pid)]
+            subprocess.run(cmd, capture_output=True)
+        else:
+            # Linux/Mac: kill
+            sig = signal.SIGKILL if force else signal.SIGTERM
+            os.kill(pid, sig)
+
+        # Aguardar um pouco para o processo terminar
+        time.sleep(0.5)
+
+        # Verificar se a porta foi liberada
+        return not is_port_in_use(port)
+    except Exception:
+        return False
+
+
+def kill_processes_on_ports(ports: Set[int], verbose: bool = True) -> dict:
+    """
+    Mata processos em múltiplas portas.
+
+    Args:
+        ports: Conjunto de portas a liberar
+        verbose: Se True, imprime mensagens de status
+
+    Returns:
+        Dicionário com status de cada porta {porta: (tinha_processo, foi_morto)}
+    """
+    results = {}
+
+    for port in ports:
+        if is_port_in_use(port):
+            pid = get_pid_on_port(port)
+            if verbose:
+                print(f"{Colors.YELLOW}⚠️  Porta {port} ocupada (PID: {pid}){Colors.NC}")
+
+            # Tentar matar graciosamente primeiro
+            killed = kill_process_on_port(port, force=False)
+
+            if not killed:
+                # Se não funcionou, forçar
+                if verbose:
+                    print(f"{Colors.YELLOW}   Forçando encerramento...{Colors.NC}")
+                killed = kill_process_on_port(port, force=True)
+
+            if killed:
+                if verbose:
+                    print(f"{Colors.GREEN}   ✅ Porta {port} liberada{Colors.NC}")
+                results[port] = (True, True)
+            else:
+                if verbose:
+                    print(f"{Colors.RED}   ❌ Não foi possível liberar a porta {port}{Colors.NC}")
+                results[port] = (True, False)
+        else:
+            results[port] = (False, False)
+
+    return results
+
+
+def ensure_ports_available(app_names: List[str], verbose: bool = True) -> bool:
+    """
+    Garante que as portas necessárias estão disponíveis.
+
+    Args:
+        app_names: Lista de nomes de aplicações ("api", "streamlit", "adk")
+        verbose: Se True, imprime mensagens de status
+
+    Returns:
+        True se todas as portas estão disponíveis, False caso contrário
+    """
+    ports_needed = {PORTS[name] for name in app_names if name in PORTS}
+
+    # Verificar quais portas estão em uso
+    ports_in_use = {port for port in ports_needed if is_port_in_use(port)}
+
+    if not ports_in_use:
+        return True
+
+    if verbose:
+        print(f"\n{Colors.YELLOW}🔍 Verificando portas...{Colors.NC}")
+
+    # Matar processos nas portas ocupadas
+    results = kill_processes_on_ports(ports_in_use, verbose=verbose)
+
+    # Verificar se todas as portas foram liberadas
+    all_freed = all(
+        not had_process or was_killed
+        for had_process, was_killed in results.values()
+    )
+
+    if verbose and all_freed:
+        print()
+
+    return all_freed
+
 
 def print_banner():
     """Imprime banner do AMLDO."""
@@ -157,6 +353,11 @@ def cleanup_processes(signum=None, frame=None):
 
 def run_fastapi():
     """Executa FastAPI REST API."""
+    # Garantir que a porta está disponível
+    if not ensure_ports_available(["api"]):
+        print(f"{Colors.RED}❌ Não foi possível liberar a porta 8000{Colors.NC}")
+        sys.exit(1)
+
     print(f"{Colors.BLUE}🚀 Iniciando FastAPI REST API...{Colors.NC}\n")
 
     print(f"{Colors.GREEN}📊 Acessos disponíveis:{Colors.NC}")
@@ -186,6 +387,11 @@ def run_fastapi():
 
 def run_streamlit():
     """Executa Streamlit Web App."""
+    # Garantir que a porta está disponível
+    if not ensure_ports_available(["streamlit"]):
+        print(f"{Colors.RED}❌ Não foi possível liberar a porta 8501{Colors.NC}")
+        sys.exit(1)
+
     print(f"{Colors.BLUE}🎨 Iniciando Streamlit Web App...{Colors.NC}\n")
 
     print(f"{Colors.GREEN}📊 Interface disponível em:{Colors.NC}")
@@ -215,6 +421,11 @@ def run_streamlit():
 
 def run_adk():
     """Executa Google ADK Interface."""
+    # Garantir que a porta está disponível
+    if not ensure_ports_available(["adk"]):
+        print(f"{Colors.RED}❌ Não foi possível liberar a porta 8080{Colors.NC}")
+        sys.exit(1)
+
     print(f"{Colors.BLUE}🤖 Iniciando Google ADK Interface...{Colors.NC}\n")
 
     # Verificar GOOGLE_API_KEY
@@ -234,9 +445,9 @@ def run_adk():
     print(f"{Colors.GREEN}Pressione Ctrl+C para parar o servidor{Colors.NC}")
     print(f"{Colors.CYAN}════════════════════════════════════════════════════════════{Colors.NC}\n")
 
-    # Executar adk web
+    # Executar adk web na porta 8080 (evitar conflito com FastAPI na 8000)
     try:
-        subprocess.run(["adk", "web"], check=True)
+        subprocess.run(["adk", "web", "--port", "8080"], check=True)
     except KeyboardInterrupt:
         print(f"\n{Colors.GREEN}✅ Google ADK encerrado{Colors.NC}")
     except subprocess.CalledProcessError as e:
@@ -247,8 +458,34 @@ def run_adk():
         print(f"   Execute: pip install -e .[adk]")
         sys.exit(1)
 
+def kill_all_apps():
+    """Mata todos os processos nas portas usadas pelo AMLDO."""
+    print(f"{Colors.YELLOW}🔪 Encerrando processos nas portas do AMLDO...{Colors.NC}\n")
+
+    all_ports = set(PORTS.values())
+    results = kill_processes_on_ports(all_ports, verbose=True)
+
+    # Resumo
+    killed_count = sum(1 for had, was_killed in results.values() if had and was_killed)
+    in_use_count = sum(1 for had, _ in results.values() if had)
+
+    print()
+    if in_use_count == 0:
+        print(f"{Colors.GREEN}✅ Nenhuma porta estava em uso{Colors.NC}")
+    elif killed_count == in_use_count:
+        print(f"{Colors.GREEN}✅ Todos os {killed_count} processos foram encerrados{Colors.NC}")
+    else:
+        failed = in_use_count - killed_count
+        print(f"{Colors.YELLOW}⚠️  {killed_count}/{in_use_count} processos encerrados ({failed} falharam){Colors.NC}")
+
+
 def run_all():
     """Executa todas as aplicações simultaneamente."""
+    # Garantir que todas as portas estão disponíveis
+    if not ensure_ports_available(["api", "streamlit", "adk"]):
+        print(f"{Colors.RED}❌ Não foi possível liberar todas as portas necessárias{Colors.NC}")
+        sys.exit(1)
+
     print(f"{Colors.BLUE}🚀 Iniciando TODAS as aplicações AMLDO...{Colors.NC}\n")
 
     # Registrar handler para Ctrl+C
@@ -293,7 +530,7 @@ def run_all():
     adk_log = open(logs_dir / "adk.log", "w")
     try:
         adk_proc = subprocess.Popen(
-            ["adk", "web"],
+            ["adk", "web", "--port", "8080"],
             stdout=adk_log,
             stderr=subprocess.STDOUT
         )
@@ -352,25 +589,33 @@ def show_menu():
     print(f"  {Colors.BOLD}2{Colors.NC} - Streamlit Web App (porta 8501)")
     print(f"  {Colors.BOLD}3{Colors.NC} - Google ADK Interface (porta 8080)")
     print(f"  {Colors.BOLD}4{Colors.NC} - Todas as aplicações (8000, 8501, 8080)")
+    print(f"  {Colors.BOLD}5{Colors.NC} - {Colors.YELLOW}Matar processos nas portas{Colors.NC} (8000, 8501, 8080)")
     print(f"  {Colors.BOLD}0{Colors.NC} - Sair")
     print()
 
     while True:
         try:
-            choice = input(f"{Colors.CYAN}Digite sua escolha [1-4, 0 para sair]: {Colors.NC}").strip()
-            if choice in ["0", "1", "2", "3", "4"]:
+            choice = input(f"{Colors.CYAN}Digite sua escolha [1-5, 0 para sair]: {Colors.NC}").strip()
+            if choice in ["0", "1", "2", "3", "4", "5"]:
                 return choice
             else:
-                print(f"{Colors.RED}Opção inválida. Digite um número de 0 a 4.{Colors.NC}")
+                print(f"{Colors.RED}Opção inválida. Digite um número de 0 a 5.{Colors.NC}")
         except (KeyboardInterrupt, EOFError):
             print(f"\n{Colors.YELLOW}Operação cancelada{Colors.NC}")
             sys.exit(0)
 
 def main():
     """Função principal."""
+    load_dotenv()
+
     # Parse argumentos de linha de comando
     if len(sys.argv) > 1:
         arg = sys.argv[1].lower()
+
+        # --kill não precisa verificar pré-requisitos
+        if arg in ["--kill", "-K"]:
+            kill_all_apps()
+            return
 
         # Verificar pré-requisitos
         if not check_prerequisites():
@@ -415,6 +660,8 @@ def main():
         run_adk()
     elif choice == "4":
         run_all()
+    elif choice == "5":
+        kill_all_apps()
 
 if __name__ == "__main__":
     main()

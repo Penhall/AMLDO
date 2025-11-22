@@ -34,7 +34,16 @@
       "Bash(sudo apt update:*)",
       "Bash(sudo apt install:*)",
       "Bash(adk web:*)",
-      "Bash(pip search:*)"
+      "Bash(pip search:*)",
+      "Bash(adk --version:*)",
+      "Bash(pip show:*)",
+      "Bash(timeout 10 adk web:*)",
+      "Bash(adk list:*)",
+      "Bash(source temp_venv/bin/activate)",
+      "Bash(timeout 5 adk:*)",
+      "Bash(pkill:*)",
+      "Bash(timeout 5 python:*)",
+      "Bash(timeout 8 python:*)"
     ],
     "deny": [],
     "ask": []
