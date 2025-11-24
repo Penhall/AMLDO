@@ -43,7 +43,8 @@
       "Bash(timeout 5 adk:*)",
       "Bash(pkill:*)",
       "Bash(timeout 5 python:*)",
-      "Bash(timeout 8 python:*)"
+      "Bash(timeout 8 python:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []
